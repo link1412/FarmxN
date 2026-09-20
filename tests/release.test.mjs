@@ -19,7 +19,7 @@ test('standalone HTML embeds every preview dependency and the default pack has a
     assert.equal(Buffer.from(value.split(',')[1], 'base64').subarray(1, 4).toString(), 'PNG');
   }
   const tmx = fs.readFileSync('downloads/Farm.tmx', 'utf8');
-  assert.match(tmx, /<map[^>]+width="160" height="130"/);
+  assert.match(tmx, /<map[^>]+width="2048" height="2048"/);
   const loader = JSON.parse(fs.readFileSync('templates/[CP] FarmxN/content.json'));
   assert.equal(loader.Changes[0].Target, 'Maps/Farm');
   assert.equal(loader.Changes[0].FromFile, 'assets/Farm.tmx');

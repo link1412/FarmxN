@@ -1,20 +1,24 @@
-import {BASE,LIMITS,FEATURES,defaults,validate,rect,normalized,resized,transform,spouseArea} from './core.mjs';
+import {BASE,LIMITS,FEATURES,defaults,validate,rect,normalized,resized,transform,spouseArea,PERFORMANCE_PROFILES,recommendedProfile,profileLimits,formatMultiplier} from './core.mjs';
 import {makeMap,connectivity,toTmx} from './map.mjs';
 import {download} from './export.mjs';
 const $=id=>document.getElementById(id),canvas=$('map'),ctx=canvas.getContext('2d');
-let config=defaults(),selected=FEATURES[0],history=[],map,mask,images={},baseCanvas,ground,zoom=1,offset={x:0,y:0},drag=null,toastTimer,preview,renderKey;
+let profile='auto',busy=false;
+const autoProfile=recommendedProfile(navigator.deviceMemory);
+const currentLimits=()=>profileLimits(profile==='auto'?autoProfile:profile);
+let config=autoProfile==='high'?defaults(2048,2048):defaults(),selected=FEATURES[0],history=[],map,mask,images={},baseCanvas,ground,zoom=1,offset={x:0,y:0},drag=null,toastTimer,preview,renderKey;
 function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),4500);}
-function check(next){const errors=validate(next);if(errors.length)throw Error(errors[0]);const m=makeMap(map,next),paths=connectivity(m,next);if(paths.length)throw Error(paths[0]);return m;}
+function check(next){if(next.Width*next.Height>currentLimits().area)throw Error('地图超过当前性能档位的面积上限，请提高档位或缩小尺寸。');const errors=validate(next);if(errors.length)throw Error(errors[0]);const m=makeMap(map,next),paths=connectivity(m,next);if(paths.length)throw Error(paths[0]);return m;}
 function commit(next,message){if(!map){toast('地图尚未载入，请稍候。');return false;}let checked;try{checked=check(next);}catch(e){toast(e.message);return false;}history.push(structuredClone(config));if(history.length>60)history.shift();config=normalized(next);sync(checked);if(message)toast(message);return true;}
 function sync(checked){
- $('width').value=config.Width;$('height').value=config.Height;$('dimensions').textContent=`${config.Width} × ${config.Height}`;$('area').textContent=(config.Width*config.Height).toLocaleString();$('ratio').textContent=`原版的 ${(config.Width*config.Height/5200).toFixed(1)} 倍`;$('undo').disabled=!history.length;
+ $('width').value=config.Width;$('height').value=config.Height;$('dimensions').textContent=`${config.Width} × ${config.Height}`;$('area').textContent=(config.Width*config.Height).toLocaleString();$('ratio').textContent=`Farm x ${formatMultiplier(config.Width,config.Height)}`;$('undo').disabled=!history.length;
  document.querySelectorAll('[data-size]').forEach(b=>b.classList.toggle('active',b.dataset.size===`${config.Width},${config.Height}`));
  $('feature-list').replaceChildren(...FEATURES.map(f=>{const r=rect(f,config),b=document.createElement('button');b.className='feature'+(f.id===selected.id?' active':'');b.innerHTML=`<span class="feature-icon">${f.icon}</span><span><strong>${f.name}</strong><span class="coord">${config.Positions[f.id].X}, ${config.Positions[f.id].Y} · ${f.w} × ${f.h}</span></span>`;b.onclick=()=>{selected=f;sync();};return b;}));
  const r={x:config.Positions[selected.id].X,y:config.Positions[selected.id].Y};$('selected-name').textContent=selected.name;$('selected-note').textContent=selected.note;$('pos-x').value=r.x;$('pos-y').value=r.y;
  for(const id of ['pos-x','pos-y','move','restore'])$(id).disabled=false;$('pos-x').disabled=selected.edge==='east';$('pos-y').disabled=selected.edge==='south'||selected.edge==='north';
  if(renderKey!==JSON.stringify(config)){preview=checked||makeMap(map,config);prepareBase();renderKey=JSON.stringify(config);}draw();
 }
-function drawTile(c,t,x,y){if(!t)return;const sheet=map.sheets.find(s=>s.id===t.sheet),img=images[sheet.image.split('/').pop()];if(img)c.drawImage(img,(t.index%sheet.width)*16,Math.floor(t.index/sheet.width)*16,16,16,x*16,y*16,16,16);}
+const sheetCache=new Map();
+function drawTile(c,t,x,y){if(!t)return;let cached=sheetCache.get(t.sheet);if(!cached){const sheet=map.sheets.find(s=>s.id===t.sheet);cached={sheet,img:images[sheet.image.split('/').pop()]};sheetCache.set(t.sheet,cached);}const {sheet,img}=cached;if(img)c.drawImage(img,(t.index%sheet.width)*16,Math.floor(t.index/sheet.width)*16,16,16,x*16,y*16,16,16);}
 // A bounded overview keeps long maps below browser canvas limits. At closer
 // zoom levels draw only the visible tiles so pixels stay sharp without a huge
 // full-resolution backing canvas.
@@ -41,13 +45,16 @@ canvas.addEventListener('pointerdown',e=>{if(!map)return;const p=point(e),f=[...
 canvas.addEventListener('pointermove',e=>{const p=point(e);$('coordinates').textContent=`X ${Math.floor(p.x)} · Y ${Math.floor(p.y)}  / 地图坐标`;if(drag?.feature){drag.preview={x:Math.round(p.x-drag.delta.x),y:Math.round(p.y-drag.delta.y)};if(drag.feature.edge==='east')drag.preview.x=config.Width-1+drag.feature.ox;if(drag.feature.edge==='south')drag.preview.y=config.Height-1+drag.feature.oy;if(drag.feature.edge==='north')drag.preview.y=0;const c=structuredClone(config);c.Positions[drag.feature.id]={X:drag.preview.x-(drag.feature.ox||0),Y:drag.preview.y-(drag.feature.oy||0)};drag.invalid=validate(c,mask).length>0;if(drag.feature.id==='Shrine'){const key=JSON.stringify(c.Positions.Shrine);if(drag.checked!==key){drag.checked=key;try{drag.map=check(c);drag.canvas=mapCanvas(drag.map);drag.terrainInvalid=false;}catch(e){drag.map=null;drag.canvas=null;drag.terrainInvalid=true;}}drag.invalid=drag.invalid||drag.terrainInvalid;}draw();}else if(drag){offset={x:drag.offset.x+e.clientX-drag.start.x,y:drag.offset.y+e.clientY-drag.start.y};draw();}});
 canvas.addEventListener('pointerup',()=>{if(drag?.feature){const c=structuredClone(config);c.Positions[drag.feature.id]={X:drag.preview.x-(drag.feature.ox||0),Y:drag.preview.y-(drag.feature.oy||0)};commit(c);}drag=null;draw();});canvas.addEventListener('pointercancel',()=>{drag=null;draw();});canvas.addEventListener('wheel',e=>{e.preventDefault();const r=canvas.getBoundingClientRect();scale(e.deltaY<0?1.12:1/1.12,e.clientX-r.left,e.clientY-r.top);},{passive:false});
 function move(x,y){const c=structuredClone(config);c.Positions[selected.id]={X:x,Y:y};return commit(c,'设施组及关联坐标已更新，通行检查通过。');}
-$('move').onclick=()=>move(Number($('pos-x').value),Number($('pos-y').value));$('restore').onclick=()=>{const p=transform(selected.x,selected.y,config);move(p.X,p.Y);};$('resize').onclick=()=>{const c=resized(config,Number($('width').value),Number($('height').value));if(commit(c,'地图尺寸已更新。'))fit();};
+$('move').onclick=()=>move(Number($('pos-x').value),Number($('pos-y').value));$('restore').onclick=()=>{const p=transform(selected.x,selected.y,config);move(p.X,p.Y);};$('resize').onclick=()=>{const c=resized(config,Number($('width').value),Number($('height').value));runBusy('正在生成地图…',()=>{if(commit(c,'地图尺寸已更新。'))fit();});};
 document.querySelectorAll('[data-size]').forEach(b=>b.onclick=()=>{const [Width,Height]=b.dataset.size.split(',').map(Number);if(commit(resized(config,Width,Height)))fit();});
-$('undo').onclick=()=>{if(history.length){config=history.pop();sync();fit();}};$('fit').onclick=fit;$('zoom-in').onclick=()=>scale(1.3);$('zoom-out').onclick=()=>scale(1/1.3);$('grid').onchange=draw;$('labels').onchange=draw;
-$('export-tmx').onclick=()=>{try{if(!map)throw Error('地图尚未载入');download('Farm.tmx',toTmx(check(config)),'application/xml');toast('Farm.tmx 已导出。');}catch(e){toast(e.message);}};
+$('undo').onclick=()=>{if(history.length){const previous=history.at(-1);if(previous.Width*previous.Height>currentLimits().area){toast('撤销后的地图超过当前档位，请先提高性能档位。');return;}config=history.pop();sync();fit();}};$('fit').onclick=fit;$('zoom-in').onclick=()=>scale(1.3);$('zoom-out').onclick=()=>scale(1/1.3);$('grid').onchange=draw;$('labels').onchange=draw;
+$('export-tmx').onclick=()=>runBusy('正在导出 TMX…',()=>{try{if(!map)throw Error('地图尚未载入');download('Farm.tmx',toTmx(check(config)),'application/xml');toast('Farm.tmx 已导出。');}catch(e){toast(e.message);}});
 $('help').onclick=()=>$('help-dialog').showModal();$('close-help').onclick=()=>$('help-dialog').close();$('help-dialog').onclick=e=>{if(e.target===$('help-dialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}};
 window.addEventListener('keydown',e=>{if(e.key==='Escape'){drag=null;draw();}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){e.preventDefault();$('undo').click();}});
-$('width').max=LIMITS.width;$('height').max=LIMITS.height;$('size-limit').textContent=`最小 ${BASE.width} × ${BASE.height} · 最多 ${LIMITS.area.toLocaleString()} 格`;
+function updatePerformance(){const limits=currentLimits(),selected=profile==='auto'?autoProfile:profile;$('width').max=limits.width;$('height').max=limits.height;$('size-limit').textContent=`最小 ${BASE.width} × ${BASE.height} · 当前最多 ${limits.area.toLocaleString()} 格`;$('performance-note').textContent=profile==='auto'?(Number.isFinite(navigator.deviceMemory)?`按浏览器提供的内存信息推荐：${PERFORMANCE_PROFILES[selected].label}。可手动切换。`:'浏览器未提供内存信息，默认轻量档。可按电脑性能手动切换。'):`${PERFORMANCE_PROFILES[selected].label}档 · 较大地图需要更多内存与生成时间。`;}
+$('performance').onchange=()=>{const next=$('performance').value,limits=profileLimits(next==='auto'?autoProfile:next);if(config.Width*config.Height>limits.area){$('performance').value=profile;toast('请先缩小当前地图，再降低性能档位。');return;}profile=next;updatePerformance();};
+async function runBusy(message,fn){if(busy)return;busy=true;const overlay=document.createElement('div');overlay.className='busy-overlay';overlay.textContent=message;overlay.setAttribute('role','status');document.body.append(overlay);try{await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));fn();}finally{overlay.remove();busy=false;}}
+updatePerformance();
 new ResizeObserver(()=>fit()).observe($('map-viewport'));
 try{
  const embedded=document.getElementById('farm-assets'),assets=embedded?JSON.parse(embedded.textContent):null;

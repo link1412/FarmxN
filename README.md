@@ -1,29 +1,31 @@
-# FarmxN
+# Farm x N
 
 **Make room for a bigger farm.** A browser map editor for Stardew Valley's standard farm: choose your dimensions, move landmarks, and export a **TMX** map.
 
-**[Open the editor](https://link1412.github.io/FarmxN/)** · [中文说明](README.zh-CN.md) · [Nexus release draft](docs/NEXUS.md)
+**[Open the editor](https://link1412.github.io/FarmxN/)** · [中文说明](README.zh-CN.md) · [Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/52634)
 
 ## Downloads
 
 | File | What it contains |
 | --- | --- |
-| [Default 160 × 130 farm](https://github.com/link1412/FarmxN/raw/main/downloads/FarmxN-160x130.zip) | Ready-to-install Content Patcher pack, four times the original farm area |
+| [Default 2048 × 2048 farm](https://github.com/link1412/FarmxN/raw/main/downloads/FarmxN-2048x2048.zip) | Farm x 806.6; Content Patcher map pack |
 | [Offline editor](https://github.com/link1412/FarmxN/raw/main/downloads/FarmxN-Editor.zip) | Extract and open `index.html`; no server or installation needed |
 | [Standalone HTML](https://github.com/link1412/FarmxN/raw/main/downloads/FarmxN-Editor.html) | The editor with its images and map data embedded in one file |
 | [Default Farm.tmx](https://github.com/link1412/FarmxN/raw/main/downloads/Farm.tmx) | Just the default map, for an existing map content pack |
 
-**Pre-release:** editor behavior, map generation, connectivity and TMX round trips are tested. Full in-game progression, events, seasonal appearance and multiplayer still need testing. Start with a new standard-farm save.
+**For fun and creative play:** back up your saves and start a new Standard Farm.
 
 ## Features
 
-- **Flexible dimensions:** minimum 80 × 65; maximum 262,144 tiles total. The default is 160 × 130.
+- **Flexible dimensions:** minimum 80 × 65. Performance profiles allow 262,144 (light), 1,048,576 (balanced) or 4,194,304 (high) tiles. Auto mode recommends a profile from the memory information exposed by the browser, with a conservative light fallback. You can override it manually. The default download is 2048 × 2048, shown as **Farm x 806.6**. The editor opens this size on the high profile; other profiles start at 160 × 130 (**Farm x 4**).
 - **Movable landmarks:** farmhouse, greenhouse, cave, Grandpa's shrine, shipping bin, pet bowl and three exits.
 - **Boundary rebuilding:** moving an exit closes its old opening and joins its new one to the surrounding terrain.
 - **Preserved metadata:** map properties, tile properties, animations and entry/return coordinates are carried into TMX.
 - **Checks before export:** overlapping facilities, unsupported terrain and disconnected walking routes are rejected.
 - **Large-map preview:** bounded overview canvas with visible-tile drawing when zoomed in.
 - **Local editing:** no account or backend; the standalone HTML embeds preview images and base map data. The editor exports only `Farm.tmx`.
+
+The **Farm x N** multiplier is total map area divided by the original 80 × 65 area, not plantable space. The high profile supports e.g. 2048 × 2048 (Farm x 806.6); each side is also bounded at 16,384 tiles.
 
 The current interface is in Chinese. The spouse activity area stays in its original location. Refreshing the page discards unsaved layout changes.
 
@@ -64,7 +66,6 @@ Alternatively, copy the loader in `templates/[CP] FarmxN` into `Mods` and add yo
 - The area cap is an editor resource budget, not a guarantee of in-game frame rate.
 - Caves and shrines can join straight sections of the north wall or stand on clear land. Exits stay on their corresponding map edge.
 - Third-party events may assume vanilla coordinates; custom positions are not guaranteed compatible.
-- Complete in-game event, seasonal and multiplayer validation is pending. Passing a map test does not establish gameplay compatibility.
 
 ## Develop locally
 

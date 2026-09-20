@@ -18,10 +18,12 @@ export function makeMap(base,c){
   return null;
  };
  const groundTiles=base.layers.find(a=>a.id==='Back').tiles;
+ // Repeated terrain is immutable; share its templates instead of cloning millions of identical tiles.
+ const terrainCache=new Map(),terrain=t=>{if(!terrainCache.has(t))terrainCache.set(t,clone(t));return terrainCache.get(t);};
  const generated={...base,width:c.Width,height:c.Height,properties:{...base.properties},layers:base.layers.map(l=>({...l,tiles:Array.from({length:c.Height},(_,y)=>Array.from({length:c.Width},(_,x)=>{
   const p=sample(x,y);
   if(p)return clone(l.tiles[p.y][p.x]);
-  if(l.id==='Back')return clone(groundTiles[25+(x+y)%3][40+(x*3+y)%3]);
+  if(l.id==='Back')return terrain(groundTiles[25+(x+y)%3][40+(x*3+y)%3]);
   return null;
  }))}))};
  expandPerimeter(base,generated);
@@ -74,12 +76,21 @@ export function makeMap(base,c){
  return generated;
 }
 export function connectivity(map,c){
- const blocked=(x,y)=>FEATURES.filter(f=>f.building).some(f=>{const q=c.Positions[f.id],size={'Farmhouse':[9,5],'Greenhouse':[7,6],'Shipping Bin':[2,1],'Pet Bowl':[2,2]}[f.id];return x>=q.X&&y>=q.Y&&x<q.X+size[0]&&y<q.Y+size[1];});
- const p=c.Positions,start={x:p.Farmhouse.X+5,y:p.Farmhouse.Y+5},queue=[start],seen=new Uint8Array(map.width*map.height);if(!isPassable(map,start.x,start.y))return ['农舍门前无法通行。'];seen[start.y*map.width+start.x]=1;
- for(let i=0;i<queue.length;i++){const a=queue[i];for(const [ox,oy]of [[1,0],[-1,0],[0,1],[0,-1]]){const x=a.x+ox,y=a.y+oy;if(x<0||y<0||x>=map.width||y>=map.height||seen[y*map.width+x]||!isPassable(map,x,y)||blocked(x,y))continue;seen[y*map.width+x]=1;queue.push({x,y});}}
+ const w=map.width,h=map.height,back=layer(map,'Back').tiles,walls=layer(map,'Buildings').tiles;
+ const tileFlags=new WeakMap();
+ const flags=t=>{if(!t)return 0;if(!tileFlags.has(t)){const p=props(map,t);tileFlags.set(t,(p.Water?1:0)|(p.Passable!=null?2:0));}return tileFlags.get(t);};
+ const buildings=FEATURES.filter(f=>f.building).map(f=>{const q=c.Positions[f.id],size={'Farmhouse':[9,5],'Greenhouse':[7,6],'Shipping Bin':[2,1],'Pet Bowl':[2,2]}[f.id];return {x:q.X,y:q.Y,w:size[0],h:size[1]};});
+ const p=c.Positions,start={x:p.Farmhouse.X+5,y:p.Farmhouse.Y+5},queue=new Uint32Array(w*h),seen=new Uint8Array(w*h);
+ if(!isPassable(map,start.x,start.y))return ['农舍门前无法通行。'];
+ let tail=1;queue[0]=start.y*w+start.x;seen[queue[0]]=1;
+ const visit=(x,y)=>{if(x<0||y<0||x>=w||y>=h)return;const index=y*w+x;if(seen[index])return;seen[index]=2;
+  const b=back[y][x],wall=walls[y][x];if(!b||(flags(b)&1)||(wall&&!(flags(wall)&2))||buildings.some(r=>x>=r.x&&y>=r.y&&x<r.x+r.w&&y<r.y+r.h))return;
+  seen[index]=1;queue[tail++]=index;
+ };
+ for(let head=0;head<tail;head++){const index=queue[head],x=index%w,y=Math.floor(index/w);visit(x+1,y);visit(x-1,y);visit(x,y+1);visit(x,y-1);}
  const targets=[['洞穴',p.Cave.X,p.Cave.Y+1],['温室',p.Greenhouse.X+3,p.Greenhouse.Y+6],['巴士站',p.Bus.X,p.Bus.Y],['森林',p.Forest.X,p.Forest.Y],['后山',p.Backwoods.X,p.Backwoods.Y],['神龛',p.Shrine.X,p.Shrine.Y+1]];
  if(c.Width>80)targets.push(['横向扩展区',50+Math.floor((c.Width-80)/2),25]);if(c.Height>65)targets.push(['纵向扩展区',45,35+Math.floor((c.Height-65)/2)]);
- return targets.filter(([n,x,y])=>!seen[y*map.width+x]).map(([n])=>`${n}与农舍之间没有可通行路径。`);
+ return targets.filter(([n,x,y])=>seen[y*map.width+x]!==1).map(([n])=>`${n}与农舍之间没有可通行路径。`);
 }
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 const xmlProps=p=>Object.keys(p||{}).length?`<properties>${Object.entries(p).map(([k,v])=>`<property name="${esc(k)}" type="string" value="${esc(v)}"/>`).join('')}</properties>`:'';

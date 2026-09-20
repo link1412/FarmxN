@@ -1,4 +1,4 @@
-export const BASE={width:80,height:65}, LIMITS={width:4032,height:3276,area:262144}, CUT={x:50,y:35};
+export const BASE={width:80,height:65}, LIMITS={width:16384,height:16384,area:4194304}, CUT={x:50,y:35};
 export const FEATURES=[
  {id:'Greenhouse',name:'温室',x:25,y:10,w:9,h:8,icon:'▧',building:true,note:'移动建筑初始位置、地基与门前通道。'},
  {id:'Farmhouse',name:'农舍',x:59,y:12,w:11,h:7,icon:'⌂',building:true,note:'联动农舍入口与信箱；配偶活动区固定在原位。'},
@@ -29,3 +29,13 @@ export function validate(c){
  return [...new Set(errors)];
 }
 export function normalized(c){return {SchemaVersion:2,Width:c.Width,Height:c.Height,Positions:Object.fromEntries(FEATURES.map(f=>[f.id,{...c.Positions[f.id]}]))};}
+
+export const PERFORMANCE_PROFILES = {
+ light: {label:'轻量',area:262144},
+ balanced: {label:'标准',area:1048576},
+ high: {label:'高性能',area:4194304},
+};
+export function recommendedProfile(memoryGB){return Number.isFinite(memoryGB)&&memoryGB>=8?'high':Number.isFinite(memoryGB)&&memoryGB>=4?'balanced':'light';}
+export function profileLimits(profile){const p=PERFORMANCE_PROFILES[profile]||PERFORMANCE_PROFILES.light;return {area:p.area,width:Math.min(LIMITS.width,Math.floor(p.area/BASE.height)),height:Math.min(LIMITS.height,Math.floor(p.area/BASE.width))};}
+export function areaMultiplier(width,height){return width*height/(BASE.width*BASE.height);}
+export function formatMultiplier(width,height){return Number(areaMultiplier(width,height).toFixed(2)).toLocaleString('en-US',{maximumFractionDigits:2});}

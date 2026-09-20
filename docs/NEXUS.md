@@ -1,54 +1,40 @@
-# Nexus release draft
+# Farm x N — Nexus release
 
-Status: **prepared, not submitted**. Repository: https://github.com/link1412/FarmxN
+Published: https://www.nexusmods.com/stardewvalley/mods/52634
+Status: published on 2026-09-20.
 
-## Suggested listing
+- Title: **Farm x N - Custom Farm Map Editor**
+- Version: **2.0.0**
+- Category: **Modding Tools**
+- Default download: `downloads/FarmxN-2048x2048.zip` — Content Patcher map pack.
+- Separate tool: `downloads/FarmxN-Editor.zip` — open the bundled HTML in a browser.
+- Only the 2048 × 2048 map is offered as a map download.
 
-- Game: Stardew Valley
-- Title: **FarmxN — Custom Farm Map Editor**
-- Category: Modding Tools (confirm the category available in the upload form)
-- Short description: **Resize the standard farm, move landmarks and export TMX maps in your browser. Includes a default 160 × 130 farm and an offline editor.**
-- Release status: pre-release / beta
+## Main copy
 
-## Description to paste
+**Your farm, now with a commute.**
 
-FarmxN lets you design a larger standard farm without editing map tiles by hand.
+Includes a 2048 × 2048 Standard Farm: **Farm x 806.6**. Customize dimensions and landmarks in your browser, choose a performance profile and export TMX. Offline editor included. For fun: back up your saves and start a new Standard Farm.
 
-Open the browser editor, set the width and height, reposition landmarks, and export Farm.tmx. The editor checks overlapping facilities and important walking routes before export. The included default map is 160 × 130 tiles: four times the original standard farm's area.
+The ratio measures total map area relative to the original 80 × 65 standard farm, including borders and landmarks. It is not a claim about plantable area or a world record.
 
-You can move the farmhouse, greenhouse, farm cave, Grandpa's shrine, shipping bin, pet bowl, and the backwoods, bus stop and forest exits. The spouse activity area remains in its original location. Map dimensions start at 80 × 65 with a maximum editor area of 262,144 tiles.
+## Use
 
-The editor works online through GitHub Pages or offline by opening its bundled HTML. It includes its preview images and base map data, so no setup or game-file extraction is needed for editing. The interface is currently in Chinese.
+Install SMAPI and Content Patcher, extract the whole `[CP] FarmxN` folder into `Mods`, launch via SMAPI and create a new Standard Farm. The pack contains `manifest.json`, `content.json` and `assets/Farm.tmx`. Custom exports replace `Mods/[CP] FarmxN/assets/Farm.tmx`.
 
-**Downloads**
+The editor is a separate tool: extract its ZIP and open `index.html`; do not put it in Mods. Its Chinese interface supports three performance profiles: light (262,144 tiles), balanced (1,048,576), and high (4,194,304). Browser memory information selects a recommendation; unavailable information falls back to light. Users can override the profile manually. High opens 2048 × 2048 by default; other profiles start with a smaller editable layout. No alternate prebuilt smaller map is published.
 
-- **Offline Editor:** extract the ZIP and open index.html in a modern browser. This is a tool, not a file to install into Mods.
-- **Default 160 × 130 Farm:** extract [CP] FarmxN into Mods. Requires your own Stardew Valley 1.6 installation, SMAPI 4 and Content Patcher. Launch through SMAPI and create a new standard farm.
-
-To use a custom map, replace Mods/[CP] FarmxN/assets/Farm.tmx with your exported file. Do not replace the game's original XNB files or enable another mod that also replaces Maps/Farm.
-
-**Pre-release limitations**
-
-Existing-save buildings, crops and objects are not migrated. Full in-game progression, events, multiplayer and seasonal testing is still pending. Custom landmark positions may conflict with mods or events that assume vanilla coordinates. The editor's size cap is not a guarantee of in-game performance.
-
-Source and instructions: https://github.com/link1412/FarmxN
 Online editor: https://link1412.github.io/FarmxN/
+Source: https://github.com/link1412/FarmxN
 
-## Files to upload separately
+## 中文说明
 
-| File | Description |
-| --- | --- |
-| `downloads/FarmxN-Editor.zip` | Offline editor; open its HTML directly. No nested ZIP archives. |
-| `downloads/FarmxN-160x130.zip` | Default standard-farm content pack; requires SMAPI and Content Patcher. |
+**Farm x N：农场大到，上班也算通勤。**
 
-Do not mark the editor itself as requiring SMAPI to run: SMAPI and Content Patcher are required to use the exported map in game. Do not claim Nexus/Vortex integration or a tested mod-manager install flow.
+默认 2048 × 2048，总地图面积约为原版 806.6 倍。自定义宽高和设施位置，根据电脑性能选择上限，并导出 TMX。
 
-## Remaining release checks
+建议娱乐体验，请先备份存档，并新建标准农场存档。下载默认地图包，解压后把整个 `[CP] FarmxN` 放入 `Mods`；需要 SMAPI 和 Content Patcher。离线编辑器单独下载，解压后打开 `index.html`。
 
-- Test a new standard-farm save in game: exits and return points, farmhouse entrance, greenhouse, cave, pet bowl, shipping bin and shrine interactions.
-- Verify seasons, Grandpa's evaluation, building construction and relevant events; record the actual game and dependency versions tested.
-- Capture final editor and in-game screenshots.
-- Review distribution permissions for the bundled game-derived preview artwork and map data before selecting Nexus permission declarations. These assets are excluded from the editor's ISC license; do not mark them as original artwork created by the uploader.
-- Choose the final permissions, credits and release status in Nexus. No upload or acceptance of Nexus terms has been performed by this project tooling.
+## Credits
 
-Reference: [Nexus file submission guidelines](https://help.nexusmods.com/article/28-file-submission-guidelines), [author best practices](https://help.nexusmods.com/article/136-best-practices-for-mod-authors).
+Farm x N by ifuwasacat / link1412. Original Stardew Valley artwork and map data belong to ConcernedApe and are excluded from the source-code ISC license. Thanks to SMAPI and Content Patcher.

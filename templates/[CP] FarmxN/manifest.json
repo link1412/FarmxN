@@ -1,8 +1,8 @@
 {
-  "Name": "FarmxN — Custom Standard Farm",
+  "Name": "Farm x N — Custom Standard Farm",
   "Author": "link1412",
   "Version": "2.0.0",
-  "Description": "Loads the Farm.tmx you exported from FarmxN as the standard farm.",
+  "Description": "Loads the Farm.tmx you exported from Farm x N as the standard farm.",
   "UniqueID": "link1412.FarmxN",
   "MinimumApiVersion": "4.0.0",
   "ContentPackFor": { "UniqueID": "Pathoschild.ContentPatcher" },

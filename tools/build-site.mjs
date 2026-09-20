@@ -21,9 +21,9 @@ await fs.writeFile(path.join(output, '.nojekyll'), '');
 await fs.writeFile(path.join(root, 'downloads/FarmxN-Editor.html'), html);
 await fs.writeFile(path.join(root, 'downloads/FarmxN-Editor.zip'), zip({
   'FarmxN/index.html': html,
-  'FarmxN/README.txt': 'FarmxN — Offline Editor\n\nOpen index.html in a modern browser. Images and map data are embedded; no server, Node.js or game installation is required to edit.\nExport Farm.tmx and load it using SMAPI + Content Patcher with your own Stardew Valley installation.\nThe default 160 x 130 content pack is a separate download.\nThis is a pre-release; full in-game testing is pending.\n',
+  'FarmxN/README.txt': 'Farm x N — Offline Editor\n\nOpen index.html in a modern browser. Images and map data are embedded; no server, Node.js or game installation is required to edit.\nExport Farm.tmx and load it using SMAPI + Content Patcher with your own Stardew Valley installation.\nThe default 2048 x 2048 content pack is a separate download.\nFor fun and creative play: back up your saves and start a NEW standard farm.\n',
   'FarmxN/LICENSE.txt': await fs.readFile(path.join(root, 'LICENSE'), 'utf8'),
 }));
 
-for (const file of ['FarmxN-160x130.zip', 'Farm.tmx', 'FarmxN-Editor.html', 'FarmxN-Editor.zip']) await fs.copyFile(path.join(root, 'downloads', file), path.join(output, 'downloads', file));
+for (const file of ['FarmxN-2048x2048.zip', 'Farm.tmx', 'FarmxN-Editor.html', 'FarmxN-Editor.zip']) await fs.copyFile(path.join(root, 'downloads', file), path.join(output, 'downloads', file));
 console.log(`Built standalone site/index.html (${(Buffer.byteLength(html) / 1024 / 1024).toFixed(2)} MiB). Images and map data are embedded.`);

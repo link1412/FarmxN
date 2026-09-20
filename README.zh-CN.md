@@ -1,21 +1,22 @@
-# FarmxN
+# Farm x N
 
 星露谷物语标准农场地图编辑器。自由设置地图尺寸、移动设施和出口，导出 **Farm.tmx**。
 
-**[打开在线编辑器](https://link1412.github.io/FarmxN/)** · [English](README.md) · [Nexus 发布草稿](docs/NEXUS.md)
+**[打开在线编辑器](https://link1412.github.io/FarmxN/)** · [English](README.md) · [Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/52634)
 
 ## 下载
 
-- [默认 160 × 130 大地图](https://github.com/link1412/FarmxN/raw/main/downloads/FarmxN-160x130.zip)：原版四倍面积，包含 TMX 和 Content Patcher 加载配置。
+- [默认 2048 × 2048 大地图](https://github.com/link1412/FarmxN/raw/main/downloads/FarmxN-2048x2048.zip)：**Farm x 806.6**，包含 TMX 和 Content Patcher 加载配置。
 - [离线编辑器 ZIP](https://github.com/link1412/FarmxN/raw/main/downloads/FarmxN-Editor.zip)：解压后打开 `index.html`，无需安装或启动服务器。
 - [单文件 HTML](https://github.com/link1412/FarmxN/raw/main/downloads/FarmxN-Editor.html)：图片和地图数据已经内嵌。
 - [默认 Farm.tmx](https://github.com/link1412/FarmxN/raw/main/downloads/Farm.tmx)：已有地图模组时可直接使用。
 
-当前为**预发布版本**。编辑器、通行检查与 TMX 回读已经验证，完整游戏流程、剧情事件、季节表现和多人游戏尚未完成验证。请新建标准农场测试。
+**建议娱乐体验：请先备份存档，并新建标准农场存档。**
 
 ## 功能
 
-- 最小 **80 × 65**，宽高自由组合，总面积最多 **262,144 格**。
+- 最小 **80 × 65**，宽高自由组合。按电脑性能选择轻量（262,144 格）、标准（1,048,576 格）或高性能（4,194,304 格），自动模式根据浏览器提供的内存信息推荐档位；无法获取时默认轻量，也可手动切换。
+- 面积以 **Farm x N** 显示：默认大地图为 2048 × 2048，即 **Farm x 806.6**。编辑器高性能档默认打开此尺寸，其他档位先打开 160 × 130（**Farm x 4**）。倍数按总地图面积计算，并非可耕种面积；单边最长 16,384 格。
 - 支持农舍、温室、洞穴、爷爷神龛、出货箱、宠物水碗及三个出口移动。
 - 移动出口时重建原开口和新开口，保留地图属性、动画及返回坐标。
 - 配偶活动区固定；导出前检查地形、重叠和通行。

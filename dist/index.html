@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FarmxN</title><meta name="description" content="调整农场地图尺寸与设施位置，导出 TMX。"><link rel="stylesheet" href="style.css?v=farmxn-ui"></head>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Farm x N</title><meta name="description" content="调整农场地图尺寸与设施位置，导出 TMX。"><link rel="stylesheet" href="style.css?v=farmxn-ui"></head>
 <body>
-<header><h1>FarmxN</h1><nav><button id="help">使用说明</button><button id="export-tmx" class="primary">导出 TMX <span aria-hidden="true">↗</span></button></nav></header>
+<header><h1>Farm x N</h1><nav><button id="help">使用说明</button><button id="export-tmx" class="primary">导出 TMX <span aria-hidden="true">↗</span></button></nav></header>
 <main>
 <aside>
- <section><h2>地图尺寸</h2><div class="dimension-inputs"><label>宽度 <span>格</span><input id="width" type="number" min="80" step="1" value="160"></label><span class="times">×</span><label>高度 <span>格</span><input id="height" type="number" min="65" step="1" value="130"></label></div><div class="presets"><button data-size="80,65">80 × 65</button><button data-size="160,130" class="active">160 × 130</button><button data-size="320,260">320 × 260</button></div><button id="resize" class="outline full">应用尺寸</button><p class="size-limit" id="size-limit">最小 80 × 65 · 最多 262,144 格</p><div class="area-line"><span><strong id="area">20,800</strong> 格</span><span id="ratio">原版的 4.0 倍</span></div></section>
+ <section><h2>地图尺寸</h2><div class="dimension-inputs"><label>宽度 <span>格</span><input id="width" type="number" min="80" step="1" value="160"></label><span class="times">×</span><label>高度 <span>格</span><input id="height" type="number" min="65" step="1" value="130"></label></div><div class="presets"><button data-size="80,65">80 × 65</button><button data-size="160,130" class="active">160 × 130</button><button data-size="320,260">320 × 260</button></div><label class="performance-label" for="performance">电脑性能<select id="performance"><option value="auto">自动推荐</option><option value="light">轻量 · 低内存设备</option><option value="balanced">标准 · 日常电脑</option><option value="high">高性能 · 内存充足</option></select></label><p id="performance-note" class="size-limit"></p><button id="resize" class="outline full">应用尺寸</button><p class="size-limit" id="size-limit">最小 80 × 65 · 最多 262,144 格</p><div class="area-line"><span><strong id="area">20,800</strong> 格</span><span id="ratio" title="总地图面积 ÷ 原版 80 × 65；不是可耕种面积">Farm x 4</span></div></section>
  <section class="features-section"><h2>设施与出口</h2><div id="feature-list"></div></section>
 </aside>
 <div class="workspace">
