@@ -23,7 +23,8 @@
 - **Preserved metadata:** map properties, tile properties, animations and entry/return coordinates are carried into TMX.
 - **Checks before export:** overlapping facilities, unsupported terrain and disconnected walking routes are rejected.
 - **Large-map preview:** bounded overview canvas with visible-tile drawing when zoomed in.
-- **Local editing:** no account or backend; the standalone HTML embeds preview images and base map data. The editor exports only `Farm.tmx`.
+- **One editor, online or offline:** exactly the same HTML file, with compressed base map data and embedded preview images. Data is unpacked when the editor becomes visible; images decode when needed. No account or backend. The editor exports only `Farm.tmx`.
+- **Large-map preview:** map generation and TMX export run in a background worker. The canvas uses a bounded overview and caches visible chunks (up to 32 MiB), with one redraw per animation frame. Dragging a landmark previews its position; release it to rebuild and validate the map.
 
 The **Farm x N** multiplier is total map area divided by the original 80 × 65 area, not plantable space. The high profile supports e.g. 2048 × 2048 (Farm x 806.6); each side is also bounded at 16,384 tiles.
 
