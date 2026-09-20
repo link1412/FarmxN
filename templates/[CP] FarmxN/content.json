@@ -1,0 +1,11 @@
+{
+  "Format": "2.0.0",
+  "Changes": [
+    {
+      "Action": "Load",
+      "Target": "Maps/Farm",
+      "FromFile": "assets/Farm.tmx",
+      "When": { "FarmType": "Standard" }
+    }
+  ]
+}

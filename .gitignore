@@ -1,0 +1,14 @@
+node_modules/
+**/bin/
+**/obj/
+.sites-runtime/
+.DS_Store
+release/
+release-v2/
+legacy-v1/
+
+# Local/deployment output
+dist/Farm-N-Map.zip
+.openai/
+artifacts/
+site/

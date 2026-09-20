@@ -1,0 +1,17 @@
+import fs from 'node:fs/promises';
+import { defaults } from '../dist/core.mjs';
+import { makeMap, connectivity, toTmx } from '../dist/map.mjs';
+import { zip } from '../dist/export.mjs';
+const base = JSON.parse(await fs.readFile(new URL('../dist/assets/farm.json', import.meta.url)));
+const config = defaults(160, 130), map = makeMap(base, config);
+const errors = connectivity(map, config);
+if (errors.length) throw Error(errors.join('\n'));
+const root = '[CP] FarmxN/', tmx = toTmx(map);
+const files = {};
+for (const name of ['manifest.json', 'content.json']) files[root + name] = await fs.readFile(new URL('../templates/' + root + name, import.meta.url), 'utf8');
+files[root + 'assets/Farm.tmx'] = tmx;
+files[root + 'README.txt'] = 'FarmxN — Default 160 x 130 Standard Farm\n\nRequires Stardew Valley 1.6, SMAPI 4 and Content Patcher.\nCopy [CP] FarmxN into the game Mods directory. Launch via SMAPI and start a NEW standard farm.\nDo not enable another mod which also replaces Maps/Farm.\nThis is a pre-release: full in-game event, multiplayer and seasonal testing is pending.\n\n默认 160 × 130 标准农场。安装 SMAPI 和 Content Patcher 后，将 [CP] FarmxN 放入 Mods，启动并新建标准农场。\n请勿同时启用其他替换 Maps/Farm 的模组。当前为预发布，完整游戏流程尚未验证。\n';
+await fs.mkdir(new URL('../downloads/', import.meta.url), { recursive: true });
+await fs.writeFile(new URL('../downloads/FarmxN-160x130.zip', import.meta.url), zip(files));
+await fs.writeFile(new URL('../downloads/Farm.tmx', import.meta.url), tmx);
+console.log('Built downloads/FarmxN-160x130.zip and downloads/Farm.tmx');

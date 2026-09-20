@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><GamePath Condition="'$(GamePath)' == ''">$(STARDEW_GAME)</GamePath></PropertyGroup>
+  <Target Name="CheckGamePath" BeforeTargets="ResolveReferences"><Error Condition="!Exists('$(GamePath)/xTile.dll')" Text="Set GamePath to the installed game directory, or run npm run prepare-assets." /></Target>
+  <ItemGroup>
+    <Reference Include="xTile"><HintPath>$(GamePath)/xTile.dll</HintPath></Reference>
+    <Reference Include="MonoGame.Framework"><HintPath>$(GamePath)/MonoGame.Framework.dll</HintPath></Reference>
+    <Reference Include="StardewValley.GameData"><HintPath>$(GamePath)/StardewValley.GameData.dll</HintPath></Reference>
+    <Reference Include="TMXTile"><HintPath>$(GamePath)/smapi-internal/TMXTile.dll</HintPath></Reference>
+  </ItemGroup>
+</Project>
