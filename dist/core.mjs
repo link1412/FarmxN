@@ -1,5 +1,5 @@
 import {t} from './i18n.mjs';
-export const BASE={width:80,height:65}, LIMITS={width:16384,height:16384,area:4096*4096}, CUT={x:50,y:35};
+export const BASE={width:80,height:65}, LIMITS={width:4096,height:4096,area:4096*4096}, CUT={x:50,y:35};
 // Names and notes are resolved through the message catalog on every access, so
 // switching the page language re-labels landmarks and every error message.
 const localized=f=>Object.defineProperties({...f,movable:true},{name:{enumerable:true,get(){return t(`feature.${f.id}.name`);}},note:{enumerable:true,get(){return t(`feature.${f.id}.note`);}}});

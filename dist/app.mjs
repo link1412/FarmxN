@@ -86,6 +86,8 @@ window.addEventListener('keydown',e=>{
 function updateLimits(){$('width').max=LIMITS.width;$('height').max=LIMITS.height;$('size-limit').textContent=t('dims.limit',{w:BASE.width,h:BASE.height,area:LIMITS.area.toLocaleString()});updateSizeNote();}
 function updateSizeNote(){const heavy=Number($('width').value)*Number($('height').value)>HEAVY_AREA;$('size-note').textContent=heavy?t('dims.heavy'):'';$('size-note').hidden=!heavy;}
 $('width').oninput=$('height').oninput=updateSizeNote;
+// Typed sizes are clamped to the allowed range when the field loses focus.
+for(const id of ['width','height'])$(id).onchange=()=>{const el=$(id),value=Math.round(Number(el.value));if(Number.isFinite(value))el.value=Math.min(Number(el.max),Math.max(Number(el.min),value));updateSizeNote();};
 async function runBusy(message,fn){if(busy)return;busy=true;const overlay=document.createElement('div');overlay.className='busy-overlay';overlay.textContent=message;overlay.setAttribute('role','status');document.body.append(overlay);try{await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));return await fn();}catch(e){toast(e.message);return false;}finally{overlay.remove();busy=false;}}
 applyLocale();
 new ResizeObserver(()=>fit()).observe($('map-viewport'));

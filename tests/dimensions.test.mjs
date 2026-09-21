@@ -6,13 +6,17 @@ import { makeMap, connectivity } from '../dist/map.mjs';
 
 const base = JSON.parse(fs.readFileSync(new URL('../dist/assets/farm.json', import.meta.url)));
 
-test('custom dimensions use one area budget of 4096 × 4096 and retain the original minimum', () => {
+test('each side is capped at 4096 and the original minimum stays', () => {
   assert.equal(LIMITS.area, 4096 * 4096);
-  for (const [w, h] of [[80, 65], [201, 301], [320, 260], [512, 512], [1024, 256], [4032, 65], [80, 3276], [2048, 2048], [4096, 4096], [16384, 1024], [1024, 16384]]) {
+  assert.equal(LIMITS.width, 4096);
+  assert.equal(LIMITS.height, 4096);
+  for (const [w, h] of [[80, 65], [201, 301], [320, 260], [512, 512], [1024, 256], [4032, 65], [80, 3276], [2048, 2048], [4096, 4096]]) {
     assert.deepEqual(validate(defaults(w, h)), [], `${w} × ${h}`);
   }
   for (const [w, h] of [[79, 65], [80, 64], [80.5, 65], [Infinity, 65], [80, NaN]]) assert.ok(validate(defaults(w, h)).length);
-  assert.ok(validate(defaults(4096, 4097)).some(e => e.includes('总面积')));
+  assert.ok(validate(defaults(4096, 4097)).some(e => e.includes('高度')));
+  assert.ok(validate(defaults(4097, 4096)).some(e => e.includes('宽度')));
+  assert.ok(validate(defaults(5000, 130)).length, 'a long side is capped even when the area fits');
   assert.ok(validate(defaults(LIMITS.width + 1, 65)).length);
   assert.ok(validate(defaults(80, LIMITS.height + 1)).length);
 });

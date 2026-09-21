@@ -17,7 +17,7 @@
 
 ## Features
 
-- **Flexible dimensions:** minimum 80 × 65, maximum 16,777,216 tiles (4096 × 4096, **Farm x 3226**), each side bounded at 16,384 tiles. The default download is 2048 × 2048, shown as **Farm x 806.6**. The editor opens this size, or 160 × 130 (**Farm x 4**) when the browser reports less than 8 GB of memory. Maps above 2048 × 2048 need several GB of free memory in the browser and in the game, and take longer to generate, export and load.
+- **Flexible dimensions:** minimum 80 × 65, maximum 4096 × 4096 (**Farm x 3226**). The default download is 2048 × 2048, shown as **Farm x 806.6**. The editor opens this size, or 160 × 130 (**Farm x 4**) when the browser reports less than 8 GB of memory. Maps above 2048 × 2048 need several GB of free memory in the browser and in the game, and take longer to generate, export and load.
 - **Movable landmarks:** farmhouse, greenhouse, cave, Grandpa's shrine, shipping bin, pet bowl and three exits.
 - **Boundary rebuilding:** moving an exit closes its old opening and joins its new one to the surrounding terrain.
 - **Preserved metadata:** map properties, tile properties, animations and entry/return coordinates are carried into TMX.

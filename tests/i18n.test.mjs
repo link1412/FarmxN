@@ -35,7 +35,7 @@ test('landmark names, validation and map errors follow the active locale',()=>{
  try{
   setLocale('en');
   assert.equal(FEATURES.find(f=>f.id==='Shrine').name,'Grandpa’s shrine');
-  assert.match(validate(defaults(4096,4097))[0],/Total map area/);
+  assert.match(validate(defaults(4096,4097))[0],/Height must be a whole number from 65 to 4096/);
   const blocked=defaults();blocked.Positions.Cave={X:126,Y:5};
   assert.throws(()=>makeMap(base,blocked),/no straight stretch of north cliff here for the Farm cave/);
   const pond=defaults();pond.Positions.Bus.Y=30;
