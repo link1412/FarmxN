@@ -160,3 +160,24 @@ test('exits reject ponds and raised corners before cutting a broken opening', ()
   c.Positions.Bus.Y = 17; c.Positions.Forest.X = 150;
   assert.throws(() => makeMap(base, c), /高台/);
 });
+test('closing the vanilla forest opening keeps its bushes and never exposes their base tiles', () => {
+  const before = makeMap(base, defaults());
+  for (const x of [100, 60, 47, 43, 39, 36]) {
+    const c = defaults(); c.Positions.Forest.X = x;
+    const map = makeMap(base, c);
+    for (let xx = 30; xx <= 47; xx++) {
+      if ([126, 127, 128, 129].some(y => at(map, 'AlwaysFront', xx, y) !== null)) continue; // still under a bush
+      for (const y of [127, 128, 129]) {
+        assert.ok(![175, 232, 355, 380].includes(at(map, 'Buildings', xx, y)), `bush base ${xx},${y} with the forest exit at ${x}`);
+        assert.notEqual(at(map, 'Front', xx, y), 175, `bush base overlay ${xx},${y} with the forest exit at ${x}`);
+        assert.ok(![175, 325, 329, 350].includes(at(map, 'Back', xx, y)), `bush base ground ${xx},${y} with the forest exit at ${x}`);
+      }
+    }
+    if (x >= 60) {
+      // Far moves leave both bushes exactly as vanilla and close the path beneath them.
+      for (let xx = 30; xx <= 46; xx++) for (let y = 126; y <= 129; y++) assert.equal(at(map, 'AlwaysFront', xx, y), at(before, 'AlwaysFront', xx, y), `${xx},${y}`);
+      for (const xx of [39, 40, 41, 42]) assert.equal(isPassable(map, xx, 129), false);
+    }
+    assert.deepEqual(connectivity(map, c), []);
+  }
+});

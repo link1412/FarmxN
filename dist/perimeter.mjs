@@ -192,6 +192,8 @@ export function boundaryBrush(base, map) {
 export function relocateExits(base, map, exits) {
   if (!exits.length) return;
   const { source, target, wall, ground, set, clearTrees } = boundaryBrush(base, map);
+  // Like set(), but leaves the AlwaysFront canopy layers alone.
+  const setGround = (x, y, cells) => { for (const id of Object.keys(target)) if (!id.startsWith('AlwaysFront')) target[id][y][x] = copy(cells[id]); };
   // A gate can remove a fence or trees, but cannot cut through a pond or
   // level a raised corner. Reject those placements before changing any tile.
   const properties = t => t ? { ...map.sheets.find(s => s.id === t.sheet)?.tileProperties[t.index], ...t.properties } : {};
@@ -211,7 +213,8 @@ export function relocateExits(base, map, exits) {
       const t = l.tiles[exit.src.y + y][exit.src.x + x];
       return copy(!['Back', 'Paths'].includes(l.id) && treeAt(t, wall.sheet, l.id !== 'Buildings') ? l.id === 'Buildings' ? wall : null : t);
     }))) }));
-  for (const { src, dst } of patches) { clearTrees(src); clearTrees(dst); }
+  // The vanilla forest opening keeps its flowering bushes; only a new opening cut through them removes them.
+  for (const { id, src, dst } of patches) { if (id !== 'Forest') clearTrees(src); clearTrees(dst); }
   for (const { id, src, dst } of patches) {
     if (id === 'Bus') {
       // Rebuild the entire old gate, including both end caps and the short
@@ -235,8 +238,10 @@ export function relocateExits(base, map, exits) {
       if (id === 'Backwoods') {
         const sx = 14 + x % 2;
         set(x, y, { Back: northBack(source.Back, x, y), Buildings: y < 4 ? wall : source.Buildings[y][sx] });
-      } else {
-        set(x, y, southCells(source, x, y, map.height));
+      } else if (x >= src.x + 2 && x < src.x + 6) {
+        // Only the four opening columns close. The bushes on either side stay
+        // and keep hanging over the new stretch of hedge.
+        setGround(x, y, southCells(source, x, y, map.height));
       }
     }
   }
@@ -281,6 +286,22 @@ export function relocateExits(base, map, exits) {
     }
     for (let i = 0; i < map.layers.length; i++) for (let y = 0; y < dst.h; y++) for (let x = 0; x < dst.w; x++) {
       map.layers[i].tiles[dst.y + y][dst.x + x] = cells[i][y][x];
+    }
+  }
+  // Vanilla draws the bushes beside the forest opening over plain "bush base"
+  // tiles that are never meant to show. Where a bush had to go, turn the
+  // exposed base back into ordinary hedge so no flat patch remains.
+  if (patches.some(p => p.id === 'Forest')) {
+    const dy = map.height - 65, bases = [175, 232, 355, 380];
+    for (let x = 30; x <= 47; x++) {
+      if ([61, 62, 63, 64].some(sy => target.AlwaysFront[sy + dy][x])) continue;
+      for (const sy of [62, 63, 64]) {
+        const y = sy + dy, t = target.Buildings[y][x], f = target.Front[y][x], b = target.Back[y][x];
+        if (t?.sheet === wall.sheet && bases.includes(t.index)) target.Buildings[y][x] = copy(sy === 62 ? { ...wall, index: 326 } : wall);
+        if (f?.sheet === wall.sheet && f.index === 175) target.Front[y][x] = null;
+        // Ground under the bushes mixes the path-edge variants (325/329/350) with plain 175; use the standard hedge ground.
+        if (b?.sheet === wall.sheet && [175, 325, 329, 350].includes(b.index)) target.Back[y][x] = copy(southCells(source, x, y, map.height).Back);
+      }
     }
   }
 }
