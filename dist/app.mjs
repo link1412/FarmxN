@@ -2,7 +2,6 @@ import {BASE,FEATURES,defaults,validate,rect,normalized,resized,transform,spouse
 import {createMapWorker,loadBase,loadImage,whenVisible} from './resources.mjs';
 import {MapRenderer,visibleTiles} from './renderer.mjs';
 import {download} from './export.mjs';
-import {parseLayout,layoutJson} from './layout.mjs';
 import {t,getLocale,setLocale,detectLocale} from './i18n.mjs';
 const $=id=>document.getElementById(id),canvas=$('map'),ctx=canvas.getContext('2d');
 // localStorage only remembers conveniences (language, last layout). It can be missing or throw
@@ -75,21 +74,6 @@ document.querySelectorAll('[data-size]').forEach(b=>b.onclick=()=>{const [Width,
 async function travel(from,to){if(busy||!from.length)return;const target=from.at(-1),current=structuredClone(config);if(await commit(target,null,{remember:false,fitView:true})){from.pop();to.push(current);sync();}}
 $('undo').onclick=()=>travel(history,future);$('redo').onclick=()=>travel(future,history);$('fit').onclick=fit;$('zoom-in').onclick=()=>scale(1.3);$('zoom-out').onclick=()=>scale(1/1.3);$('grid').onchange=draw;$('labels').onchange=draw;
 $('export-tmx').onclick=()=>runBusy(t('busy.exporting'),async()=>{if(!ready)throw Error(t('error.notLoaded'));const blob=await worker.call('export',{config:normalized(config)});download('Farm.tmx',blob,'application/xml');toast(t('toast.exported'));});
-// Layouts: export JSON, import JSON or a Farm.tmx made here (button or drop onto the map), reset.
-$('layout-export').onclick=()=>{download(`FarmxN-layout-${config.Width}x${config.Height}.json`,layoutJson(config),'application/json');toast(t('layout.exported'));};
-$('layout-import').onclick=()=>$('layout-file').click();
-$('layout-file').onchange=()=>{const file=$('layout-file').files[0];$('layout-file').value='';if(file)importFile(file);};
-$('layout-reset').onclick=()=>commit(initialConfig(),t('layout.resetDone'),{fitView:true});
-async function importFile(file){try{await importLayout(await file.text());}catch(e){toast(e.message);}}
-async function importLayout(text){
- if(!ready)throw Error(t('toast.notReady'));
- const next=parseLayout(text),fits=fittingProfile(next.Width*next.Height,activeProfile());let note='';
- if(fits!==activeProfile()){profile=fits;$('performance').value=fits;updatePerformance();note=' '+t('layout.profileRaised',{profile:profileLabel(fits)});}
- return commit(next,t('layout.imported')+note,{fitView:true});
-}
-for(const type of ['dragenter','dragover'])$('map-viewport').addEventListener(type,e=>{if(e.dataTransfer?.types.includes('Files')){e.preventDefault();e.dataTransfer.dropEffect='copy';$('map-viewport').classList.add('dropping');}});
-$('map-viewport').addEventListener('dragleave',()=>$('map-viewport').classList.remove('dropping'));
-$('map-viewport').addEventListener('drop',e=>{e.preventDefault();$('map-viewport').classList.remove('dropping');const file=e.dataTransfer.files[0];if(file)importFile(file);});
 $('help').onclick=()=>$('help-dialog').showModal();$('close-help').onclick=()=>$('help-dialog').close();$('help-dialog').onclick=e=>{if(e.target===$('help-dialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}};
 // Arrow keys nudge the selected landmark while the map has focus; exits stay on their edge.
 function nudge(key,step){if(!ready||busy)return;let dx=key==='ArrowLeft'?-step:key==='ArrowRight'?step:0,dy=key==='ArrowUp'?-step:key==='ArrowDown'?step:0;if(selected.edge==='east')dx=0;if(selected.edge==='north'||selected.edge==='south')dy=0;if(!dx&&!dy)return;const p=config.Positions[selected.id];move(p.X+dx,p.Y+dy);}

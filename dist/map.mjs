@@ -1,4 +1,4 @@
-import {FEATURES,CUT,transform,rect,parts,spouseArea,validate,defaults,normalized} from './core.mjs';
+import {FEATURES,CUT,transform,rect,parts,spouseArea,validate,defaults} from './core.mjs';
 import {t as msg} from './i18n.mjs';
 import {expandPerimeter,relocateExits} from './perimeter.mjs';
 import {restoreShrine,placeShrine,shrineOnNorthBank} from './shrine.mjs';
@@ -63,9 +63,7 @@ export function makeMap(base,c){
   GreenhouseLocation:fmt(p.Greenhouse),FarmHouseEntry:fmt(p.Farmhouse,5,3),MailboxLocation:fmt(p.Farmhouse,9,4),SpouseAreaLocation:`${spouse.x} ${spouse.y}`,
   ShippingBinLocation:fmt(p['Shipping Bin']),PetBowlLocation:fmt(p['Pet Bowl']),FarmCaveEntry:fmt(p.Cave,0,1),GrandpaShrineLocation:fmt(p.Shrine),
   BusStopEntry:fmt(p.Bus),ForestEntry:fmt(p.Forest),BackwoodsEntry:fmt(p.Backwoods),
-  'FarmN/Schema':'2','FarmN/Width':String(c.Width),'FarmN/Height':String(c.Height),
-  // The full layout rides along so an exported Farm.tmx can be opened in the editor again.
-  'FarmN/Layout':JSON.stringify(normalized(c))
+  'FarmN/Schema':'2','FarmN/Width':String(c.Width),'FarmN/Height':String(c.Height)
  });
  const warps=base.properties.Warp.split(/\s+/),out=[];
  for(let i=0;i<warps.length;i+=5){let [x,y,dest,tx,ty]=warps.slice(i,i+5);x=Number(x);y=Number(y);const id={FarmCave:'Cave',BusStop:'Bus',Forest:'Forest',Backwoods:'Backwoods'}[dest];if(id){const f=FEATURES.find(f=>f.id===id),q=p[id];x=q.X+x-f.x;y=q.Y+y-f.y;}else{const q=transform(x,y,c);x=q.X;y=q.Y;}out.push(x,y,dest,tx,ty);}

@@ -5,7 +5,6 @@ import {Worker} from 'node:worker_threads';
 import {LOCALES,DEFAULT_LOCALE,messageKeys,setLocale,getLocale,detectLocale,t} from '../dist/i18n.mjs';
 import {FEATURES,defaults,validate,fittingProfile,profileLabel,normalized} from '../dist/core.mjs';
 import {makeMap,toTmx} from '../dist/map.mjs';
-import {parseLayout,layoutFromTmx,layoutJson,LAYOUT_PROPERTY} from '../dist/layout.mjs';
 const base=JSON.parse(fs.readFileSync(new URL('../dist/assets/farm.json',import.meta.url)));
 const placeholders=text=>[...text.matchAll(/\{(\w+)\}/g)].map(m=>m[1]).sort();
 
@@ -55,21 +54,6 @@ test('fitting profile keeps the preferred profile when the map fits, otherwise t
  assert.equal(fittingProfile(1000*1000,'light'),'balanced');
  assert.equal(fittingProfile(2048*2048,'balanced'),'high');
  assert.equal(fittingProfile(160*130,'nonsense'),'light');
-});
-
-test('layouts round-trip through JSON and through the exported TMX',()=>{
- const config=defaults(160,130);config.Positions.Shrine={X:20,Y:7};config.Positions.Bus={X:159,Y:70};
- assert.deepEqual(parseLayout(layoutJson(config)),normalized(config));
- assert.deepEqual(parseLayout(JSON.stringify({config,profile:'auto'})),normalized(config));
- const tmx=toTmx(makeMap(base,config));
- assert.ok(tmx.includes(`name="${LAYOUT_PROPERTY}"`));
- assert.deepEqual(layoutFromTmx(tmx),normalized(config));
- assert.deepEqual(parseLayout('﻿'+tmx),normalized(config));
- assert.throws(()=>parseLayout('<?xml version="1.0"?><map></map>'),/Farm x N/);
- assert.throws(()=>parseLayout('{not json'),/布局文件/);
- assert.throws(()=>parseLayout(JSON.stringify({...config,Width:10})),/宽度/);
- const overlapping=structuredClone(config);overlapping.Positions.Greenhouse={X:100,Y:70};overlapping.Positions.Farmhouse={X:100,Y:70};
- assert.throws(()=>parseLayout(JSON.stringify(overlapping)),/重叠/);
 });
 
 test('the worker reports errors in the locale sent with each request',async()=>{
