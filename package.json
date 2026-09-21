@@ -7,8 +7,7 @@
     "start": "node tools/serve.cjs",
     "package": "node tools/package.cjs",
     "prepare-assets": "node tools/prepare-assets.cjs",
-    "build-default": "node tools/build-default.mjs",
-    "build": "npm run build-default && node tools/build-site.mjs"
+    "build": "node tools/build-site.mjs"
   },
   "keywords": [],
   "author": "link1412",

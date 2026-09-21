@@ -4,20 +4,15 @@
 
 **[Open the editor](https://link1412.github.io/FarmxN/)** · [中文说明](README.zh-CN.md) · [Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/52634)
 
-## Downloads
+## Nothing to download
 
-| File | What it contains |
-| --- | --- |
-| [Default 2048 × 2048 farm](https://github.com/link1412/FarmxN/raw/main/downloads/FarmxN-2048x2048.zip) | Farm x 806.6; Content Patcher map pack |
-| [Offline editor](https://github.com/link1412/FarmxN/raw/main/downloads/FarmxN-Editor.zip) | Extract and open `index.html`; no server or installation needed |
-| [Standalone HTML](https://github.com/link1412/FarmxN/raw/main/downloads/FarmxN-Editor.html) | The editor with its images and map data embedded in one file |
-| [Default Farm.tmx](https://github.com/link1412/FarmxN/raw/main/downloads/Farm.tmx) | Just the default map, for an existing map content pack |
+Everything happens in your browser. Open the editor, pick a size, move the landmarks and export. No maps are hosted here and nothing is fetched while you work: the page is one self-contained HTML file of about 600 KB with the base map and preview images embedded. To use it offline, save the page from your browser (Ctrl/⌘ S).
 
 **For fun and creative play:** back up your saves and start a new Standard Farm.
 
 ## Features
 
-- **Flexible dimensions:** minimum 80 × 65, maximum 4096 × 4096 (**Farm x 3226**). The default download is 2048 × 2048, shown as **Farm x 806.6**. The editor opens this size, or 160 × 130 (**Farm x 4**) when the browser reports less than 8 GB of memory. Maps above 2048 × 2048 need several GB of free memory in the browser and in the game, and take longer to generate, export and load.
+- **Flexible dimensions:** minimum 80 × 65, maximum 4096 × 4096 (**Farm x 3226**). The editor opens at 160 × 130 (**Farm x 4**); presets go up to 2048 × 2048 (**Farm x 806.6**) and 4096 × 4096. Maps above 2048 × 2048 need several GB of free memory in the browser and in the game, and take longer to generate, export and load.
 - **Movable landmarks:** farmhouse, greenhouse, cave, Grandpa's shrine, shipping bin, pet bowl and three exits.
 - **Boundary rebuilding:** moving an exit closes its old opening and joins its new one to the surrounding terrain.
 - **Preserved metadata:** map properties, tile properties, animations and entry/return coordinates are carried into TMX.
@@ -33,21 +28,14 @@ The **Farm x N** multiplier is total map area divided by the original 80 × 65 a
 
 The interface is available in English and Chinese. The spouse activity area stays in its original location.
 
-## Use the default farm
+## Make and install a map
 
 1. Install your own copy of **Stardew Valley 1.6**, [SMAPI 4](https://smapi.io/) and [Content Patcher](https://www.nexusmods.com/stardewvalley/mods/1915).
-2. Download the default farm ZIP and extract `[CP] FarmxN` into the game's `Mods` directory.
-3. Launch through SMAPI and create a **new standard farm**.
-
-The content pack uses the game's own tilesheets; you do not need to copy preview PNGs into the game.
-
-## Use a custom map
-
-1. Open the online or offline editor.
-2. Apply your width and height. Select a landmark and drag it or enter coordinates.
-3. Scroll to zoom, drag empty space to pan, nudge the selected landmark with the arrow keys, and use Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z to undo and redo.
-4. Select **Export TMX** to save `Farm.tmx`. The layout also stays in your browser until you change it.
-5. Replace the map in the installed default pack:
+2. Open [the editor](https://link1412.github.io/FarmxN/).
+3. Apply your width and height. Select a landmark and drag it or enter coordinates.
+4. Scroll to zoom, drag empty space to pan, nudge the selected landmark with the arrow keys, and use Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z to undo and redo.
+5. Select **Export TMX** to save `Farm.tmx`. The layout also stays in your browser until you change it.
+6. Copy `templates/[CP] FarmxN` from this repository into the game's `Mods` directory and put `Farm.tmx` into its `assets` folder:
 
 ```text
 Stardew Valley/
@@ -59,7 +47,9 @@ Stardew Valley/
             └── Farm.tmx
 ```
 
-Alternatively, copy the loader in `templates/[CP] FarmxN` into `Mods` and add your exported map to its `assets` folder before launching. The template alone has no map.
+7. Launch through SMAPI and create a **new standard farm**.
+
+The template alone has no map. The content pack uses the game's own tilesheets; you do not need to copy preview PNGs into the game.
 
 `[CP] FarmxN` is a naming convention, not a required folder name: `content.json`'s `FromFile` determines the loaded path. An existing map content pack can load the exported TMX instead. A TMX file cannot be renamed to XNB or dropped over the original `Content/Maps/Farm.xnb`.
 
@@ -85,13 +75,13 @@ npm start
 Open **http://127.0.0.1:8765/**. No .NET SDK or game installation is needed just to run the bundled editor.
 
 ```sh
-npm test          # map, boundary, movement and export tests
-npm run build    # default content pack + standalone HTML + offline ZIP
+npm test          # map, boundary, movement, export and i18n tests
+npm run build    # site/index.html, the single self-contained page
 ```
 
 GitHub Actions runs the same tests on Node 22 and 24 for every push to `main` and every pull request (`.github/workflows/ci.yml`).
 
-`site/` is the generated GitHub Pages directory. The live site is published from the `gh-pages` branch. See [deployment notes](docs/DEPLOYMENT.md) for updates and the optional Actions workflow. `downloads/` contains prebuilt downloads; rebuild it when changing the editor or map logic.
+`site/` is the generated GitHub Pages directory. The live site is published from the `gh-pages` branch. See [deployment notes](docs/DEPLOYMENT.md) for updates and the optional Actions workflow. No build output is committed.
 
 ### Refresh assets after a game update
 

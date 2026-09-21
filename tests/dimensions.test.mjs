@@ -22,7 +22,7 @@ test('each side is capped at 4096 and the original minimum stays', () => {
 });
 
 test('square, very wide and very tall maps keep connected landmarks', () => {
-  for (const [w, h] of [[512, 512], [4032, 65], [80, 3276], [3000, 100]]) {
+  for (const [w, h] of [[512, 512], [4032, 65], [80, 3276], [3000, 100], [2048, 2048]]) {
     const c = defaults(w, h), map = makeMap(base, c);
     assert.equal(map.width, w);
     assert.equal(map.height, h);

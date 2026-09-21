@@ -9,9 +9,8 @@ const $=id=>document.getElementById(id),canvas=$('map'),ctx=canvas.getContext('2
 const STORAGE={locale:'farmxn.locale',layout:'farmxn.layout'};
 const store={get(key){try{return localStorage.getItem(key);}catch{return null;}},set(key,value){try{localStorage.setItem(key,value);}catch{}}};
 let busy=false,ready=false;
-// Open the 2048 × 2048 default farm unless the browser reports a small memory budget.
-const lowMemory=Number.isFinite(navigator.deviceMemory)&&navigator.deviceMemory<8;
-const initialConfig=()=>lowMemory?defaults():defaults(2048,2048);
+// The editor opens small; large maps are a preset away and generated on demand.
+const initialConfig=()=>defaults();
 const HEAVY_AREA=2048*2048;
 let config=initialConfig(),selected=FEATURES[0],history=[],future=[],worker,renderer,images={},zoom=1,offset={x:0,y:0},drag=null,toastTimer,framePending=false;
 setLocale(store.get(STORAGE.locale)||detectLocale(navigator.languages||[navigator.language]));
