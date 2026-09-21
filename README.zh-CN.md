@@ -56,7 +56,7 @@ npm start
 
 打开 `http://127.0.0.1:8765/`。仓库已包含预览资源，普通用户无需提取游戏文件。
 
-`npm test` 运行测试；`npm run build` 生成 `site/index.html`（单文件页面），构建产物不提交到仓库。推送到 `main` 或提交 Pull Request 时，GitHub Actions 会自动运行测试。`site/` 用于 GitHub Pages，目前从 `gh-pages` 分支发布；更新方式及可选 Actions 配置见 [部署说明](docs/DEPLOYMENT.md)。
+`npm test` 运行测试；`npm run build` 生成 `site/index.html`（单文件页面），构建产物不提交到仓库。Pull Request 会自动运行测试，部署前也会再跑一遍。`site/` 用于 GitHub Pages，推送到 `main` 后由 GitHub Actions 自动构建并部署，详见 [部署说明](docs/DEPLOYMENT.md)。
 
 游戏更新后，维护者可通过 .NET SDK 10、SMAPI 与 `npm run prepare-assets` 从本地游戏重新提取资源。详情见英文 README。
 

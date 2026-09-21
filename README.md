@@ -79,9 +79,9 @@ npm test          # map, boundary, movement, export and i18n tests
 npm run build    # site/index.html, the single self-contained page
 ```
 
-GitHub Actions runs the same tests on Node 22 and 24 for every push to `main` and every pull request (`.github/workflows/ci.yml`).
+GitHub Actions runs the same tests on Node 22 and 24 for every pull request (`.github/workflows/ci.yml`), and the deployment workflow runs them again before publishing.
 
-`site/` is the generated GitHub Pages directory. The live site is published from the `gh-pages` branch. See [deployment notes](docs/DEPLOYMENT.md) for updates and the optional Actions workflow. No build output is committed.
+`site/` is the generated GitHub Pages directory. Every push to `main` builds and deploys it through GitHub Actions (`.github/workflows/pages.yml`); see the [deployment notes](docs/DEPLOYMENT.md). No build output is committed.
 
 ### Refresh assets after a game update
 
