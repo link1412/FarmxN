@@ -1,3 +1,4 @@
+import { t as msg } from './i18n.mjs';
 // The four edges have different safe insertion points. In particular, the
 // interior cut (50, 35) runs through the north slope and the west cliff's foot.
 // Keep those transitions intact and insert between them instead.
@@ -197,10 +198,10 @@ export function relocateExits(base, map, exits) {
   for (const { id, dst } of exits) {
     if (id !== 'Bus' && id !== 'Forest') continue;
     for (let y = dst.y; y < dst.y + dst.h; y++) for (let x = dst.x; x < dst.x + dst.w; x++) {
-      if (properties(target.Back[y][x]).Water) throw Error(`${id === 'Bus' ? '巴士站' : '森林'}出口不能覆盖水面，请选择连续的岸边。`);
+      if (properties(target.Back[y][x]).Water) throw Error(msg('exit.water', { name: msg(`feature.${id}.name`) }));
       const t = target.Buildings[y][x];
       if (id === 'Forest' && y < map.height - 4 && t && t.index !== 16 && !treeAt(t, wall.sheet) && properties(t).Passable == null) {
-        throw Error('森林出口不能切开边角的高台，请沿平直的南侧边界放置。');
+        throw Error(msg('exit.corner'));
       }
     }
   }

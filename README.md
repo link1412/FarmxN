@@ -20,15 +20,18 @@
 - **Flexible dimensions:** minimum 80 × 65. Performance profiles allow 262,144 (light), 1,048,576 (balanced) or 4,194,304 (high) tiles. Auto mode recommends a profile from the memory information exposed by the browser, with a conservative light fallback. You can override it manually. The default download is 2048 × 2048, shown as **Farm x 806.6**. The editor opens this size on the high profile; other profiles start at 160 × 130 (**Farm x 4**).
 - **Movable landmarks:** farmhouse, greenhouse, cave, Grandpa's shrine, shipping bin, pet bowl and three exits.
 - **Boundary rebuilding:** moving an exit closes its old opening and joins its new one to the surrounding terrain.
-- **Preserved metadata:** map properties, tile properties, animations and entry/return coordinates are carried into TMX.
+- **Preserved metadata:** map properties, tile properties, animations and entry/return coordinates are carried into TMX. The layout itself travels as the `FarmN/Layout` map property, so an exported file can be opened in the editor again.
 - **Checks before export:** overlapping facilities, unsupported terrain and disconnected walking routes are rejected.
 - **Large-map preview:** bounded overview canvas with visible-tile drawing when zoomed in.
 - **One editor, online or offline:** exactly the same HTML file, with compressed base map data and embedded preview images. Data is unpacked when the editor becomes visible; images decode when needed. No account or backend. The editor exports only `Farm.tmx`.
-- **Large-map preview:** map generation and TMX export run in a background worker. The canvas uses a bounded overview and caches visible chunks (up to 32 MiB), with one redraw per animation frame. Dragging a landmark previews its position; release it to rebuild and validate the map.
+- **English and Chinese interface:** chosen from the browser language and switchable from the header. Landmark names, validation messages and worker errors follow the selected language.
+- **Layouts that survive a refresh:** the current layout and performance profile are saved in the browser and reopened next time. **Export JSON** saves a layout file; **Import** accepts that JSON or a `Farm.tmx` made by this editor, and either can be dropped onto the map. **Reset** returns to the default.
+- **Undo, redo and keyboard nudging:** Ctrl/⌘ Z and Ctrl/⌘ ⇧ Z step through up to 60 changes; the arrow keys move the selected landmark one tile (ten with Shift) while the map has focus.
+- **Background generation:** map generation and TMX export run in a background worker. The canvas uses a bounded overview and caches visible chunks (up to 32 MiB), with one redraw per animation frame. Dragging a landmark previews its position; release it to rebuild and validate the map.
 
 The **Farm x N** multiplier is total map area divided by the original 80 × 65 area, not plantable space. The high profile supports e.g. 2048 × 2048 (Farm x 806.6); each side is also bounded at 16,384 tiles.
 
-The current interface is in Chinese. The spouse activity area stays in its original location. Refreshing the page discards unsaved layout changes.
+The interface is available in English and Chinese. The spouse activity area stays in its original location.
 
 ## Use the default farm
 
@@ -42,8 +45,8 @@ The content pack uses the game's own tilesheets; you do not need to copy preview
 
 1. Open the online or offline editor.
 2. Apply your width and height. Select a landmark and drag it or enter coordinates.
-3. Scroll to zoom, drag empty space to pan, and use Ctrl/Cmd+Z to undo.
-4. Select **Export TMX** to save `Farm.tmx`.
+3. Scroll to zoom, drag empty space to pan, nudge the selected landmark with the arrow keys, and use Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z to undo and redo.
+4. Select **Export TMX** to save `Farm.tmx`. The layout is also kept in your browser; **Export JSON** saves it as a file, and either the JSON or the TMX can be imported again later.
 5. Replace the map in the installed default pack:
 
 ```text
@@ -85,6 +88,8 @@ Open **http://127.0.0.1:8765/**. No .NET SDK or game installation is needed just
 npm test          # map, boundary, movement and export tests
 npm run build    # default content pack + standalone HTML + offline ZIP
 ```
+
+GitHub Actions runs the same tests on Node 22 and 24 for every push to `main` and every pull request (`.github/workflows/ci.yml`).
 
 `site/` is the generated GitHub Pages directory. The live site is published from the `gh-pages` branch. See [deployment notes](docs/DEPLOYMENT.md) for updates and the optional Actions workflow. `downloads/` contains prebuilt downloads; rebuild it when changing the editor or map logic.
 

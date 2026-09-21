@@ -1,3 +1,4 @@
+import {t,getLocale} from './i18n.mjs';
 const inline=document.getElementById('farm-assets');
 let assets;
 function embedded(){return assets??=(inline?JSON.parse(inline.textContent):null);}
@@ -8,7 +9,7 @@ export async function loadBase(){
   return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).json();
  }
  if(source?.farm)return source.farm;
- const response=await fetch('assets/farm.json');if(!response.ok)throw Error('地图资源下载失败');return response.json();
+ const response=await fetch('assets/farm.json');if(!response.ok)throw Error(t('load.assetsFailed'));return response.json();
 }
 // Do not initialise a hidden editor until it is visible. The same path is used
 // from file:// and HTTP; no additional resources are needed by the built HTML.
@@ -29,6 +30,6 @@ export function createMapWorker(){
  const worker=new Worker(url,{type:'module'});if(script)URL.revokeObjectURL(url);
  let serial=0,failed=false;const pending=new Map();
  worker.onmessage=({data})=>{const request=pending.get(data.id);if(!request)return;pending.delete(data.id);data.error?request.reject(Error(data.error)):request.resolve(data.result);};
- worker.onerror=()=>{failed=true;for(const r of pending.values())r.reject(Error('后台地图计算失败，请刷新后重试或降低性能档位。'));pending.clear();};
- return {call(kind,args={}){if(failed)return Promise.reject(Error('后台地图计算不可用，请刷新重试。'));return new Promise((resolve,reject)=>{const id=++serial;pending.set(id,{resolve,reject});worker.postMessage({id,kind,...args});});}};
+ worker.onerror=()=>{failed=true;for(const r of pending.values())r.reject(Error(t('worker.crashed')));pending.clear();};
+ return {call(kind,args={}){if(failed)return Promise.reject(Error(t('worker.unavailable')));return new Promise((resolve,reject)=>{const id=++serial;pending.set(id,{resolve,reject});worker.postMessage({id,kind,locale:getLocale(),...args});});}};
 }

@@ -1,4 +1,5 @@
-import {FEATURES,CUT,transform,rect,parts,spouseArea,validate,defaults} from './core.mjs';
+import {FEATURES,CUT,transform,rect,parts,spouseArea,validate,defaults,normalized} from './core.mjs';
+import {t as msg} from './i18n.mjs';
 import {expandPerimeter,relocateExits} from './perimeter.mjs';
 import {restoreShrine,placeShrine,shrineOnNorthBank} from './shrine.mjs';
 import {restoreCave,placeCave,isNorthCliff} from './cave.mjs';
@@ -51,7 +52,7 @@ export function makeMap(base,c){
   if(f.id==='Shrine'&&shrineOnNorthBank(generated,rect(f,c)))continue;
   if(f.id==='Cave'&&p.Y===5&&isNorthCliff(generated,p.X))continue;
   for(const r of parts(f,c))for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++){
-   if(!isPassable(generated,x,y))throw Error(`${f.name}的设施组覆盖水面、树木或不可通行的地形（${x}, ${y}）。`);
+   if(!isPassable(generated,x,y))throw Error(msg('map.blockedTerrain',{name:f.name,x,y}));
   }
  }
  for(const {dst,cells}of stamps)for(let i=0;i<generated.layers.length;i++)for(let y=0;y<dst.h;y++)for(let x=0;x<dst.w;x++)generated.layers[i].tiles[dst.y+y][dst.x+x]=cells[i][y][x];
@@ -62,7 +63,9 @@ export function makeMap(base,c){
   GreenhouseLocation:fmt(p.Greenhouse),FarmHouseEntry:fmt(p.Farmhouse,5,3),MailboxLocation:fmt(p.Farmhouse,9,4),SpouseAreaLocation:`${spouse.x} ${spouse.y}`,
   ShippingBinLocation:fmt(p['Shipping Bin']),PetBowlLocation:fmt(p['Pet Bowl']),FarmCaveEntry:fmt(p.Cave,0,1),GrandpaShrineLocation:fmt(p.Shrine),
   BusStopEntry:fmt(p.Bus),ForestEntry:fmt(p.Forest),BackwoodsEntry:fmt(p.Backwoods),
-  'FarmN/Schema':'2', 'FarmN/Width':String(c.Width),'FarmN/Height':String(c.Height)
+  'FarmN/Schema':'2','FarmN/Width':String(c.Width),'FarmN/Height':String(c.Height),
+  // The full layout rides along so an exported Farm.tmx can be opened in the editor again.
+  'FarmN/Layout':JSON.stringify(normalized(c))
  });
  const warps=base.properties.Warp.split(/\s+/),out=[];
  for(let i=0;i<warps.length;i+=5){let [x,y,dest,tx,ty]=warps.slice(i,i+5);x=Number(x);y=Number(y);const id={FarmCave:'Cave',BusStop:'Bus',Forest:'Forest',Backwoods:'Backwoods'}[dest];if(id){const f=FEATURES.find(f=>f.id===id),q=p[id];x=q.X+x-f.x;y=q.Y+y-f.y;}else{const q=transform(x,y,c);x=q.X;y=q.Y;}out.push(x,y,dest,tx,ty);}
@@ -70,9 +73,9 @@ export function makeMap(base,c){
  for(const f of FEATURES.filter(f=>f.building)){const q=p[f.id];for(const r of parts(f,c))for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++){const origin=initial.Positions[f.id];if(q.X!==origin.X||q.Y!==origin.Y)layer(generated,'Paths').tiles[y][x]=null;}}
  // Keep a walkable door apron for all buildings. Runtime objects are never silently removed.
  for(const f of FEATURES.filter(f=>f.building)){const q=p[f.id],span=f.id==='Greenhouse'?{x:2,y:6,w:3,h:2}:f.id==='Farmhouse'?{x:5,y:3,w:1,h:3}:{x:0,y:f.id==='Pet Bowl'?2:1,w:2,h:1};
-  for(let yy=0;yy<span.h;yy++)for(let xx=0;xx<span.w;xx++){const x=q.X+span.x+xx,y=q.Y+span.y+yy;if(!isPassable(generated,x,y))throw Error(`${f.name}入口不通行。`);}
+  for(let yy=0;yy<span.h;yy++)for(let xx=0;xx<span.w;xx++){const x=q.X+span.x+xx,y=q.Y+span.y+yy;if(!isPassable(generated,x,y))throw Error(msg('map.entranceBlocked',{name:f.name}));}
  }
- for(let i=0;i<generated.layers.length;i++)for(let y=0;y<spouse.h;y++)for(let x=0;x<spouse.w;x++)if(JSON.stringify(generated.layers[i].tiles[spouse.y+y][spouse.x+x])!==JSON.stringify(fixedPatio[i][y][x]))throw Error('此位置会破坏固定的配偶活动区，请避开该区域及相连的树木。');
+ for(let i=0;i<generated.layers.length;i++)for(let y=0;y<spouse.h;y++)for(let x=0;x<spouse.w;x++)if(JSON.stringify(generated.layers[i].tiles[spouse.y+y][spouse.x+x])!==JSON.stringify(fixedPatio[i][y][x]))throw Error(msg('map.spouseArea'));
  return generated;
 }
 export function connectivity(map,c){
@@ -81,23 +84,23 @@ export function connectivity(map,c){
  const flags=t=>{if(!t)return 0;if(!tileFlags.has(t)){const p=props(map,t);tileFlags.set(t,(p.Water?1:0)|(p.Passable!=null?2:0));}return tileFlags.get(t);};
  const buildings=FEATURES.filter(f=>f.building).map(f=>{const q=c.Positions[f.id],size={'Farmhouse':[9,5],'Greenhouse':[7,6],'Shipping Bin':[2,1],'Pet Bowl':[2,2]}[f.id];return {x:q.X,y:q.Y,w:size[0],h:size[1]};});
  const p=c.Positions,start={x:p.Farmhouse.X+5,y:p.Farmhouse.Y+5},queue=new Uint32Array(w*h),seen=new Uint8Array(w*h);
- if(!isPassable(map,start.x,start.y))return ['农舍门前无法通行。'];
+ if(!isPassable(map,start.x,start.y))return [msg('connectivity.doorBlocked')];
  let tail=1;queue[0]=start.y*w+start.x;seen[queue[0]]=1;
  const visit=(x,y)=>{if(x<0||y<0||x>=w||y>=h)return;const index=y*w+x;if(seen[index])return;seen[index]=2;
   const b=back[y][x],wall=walls[y][x];if(!b||(flags(b)&1)||(wall&&!(flags(wall)&2))||buildings.some(r=>x>=r.x&&y>=r.y&&x<r.x+r.w&&y<r.y+r.h))return;
   seen[index]=1;queue[tail++]=index;
  };
  for(let head=0;head<tail;head++){const index=queue[head],x=index%w,y=Math.floor(index/w);visit(x+1,y);visit(x-1,y);visit(x,y+1);visit(x,y-1);}
- const targets=[['洞穴',p.Cave.X,p.Cave.Y+1],['温室',p.Greenhouse.X+3,p.Greenhouse.Y+6],['巴士站',p.Bus.X,p.Bus.Y],['森林',p.Forest.X,p.Forest.Y],['后山',p.Backwoods.X,p.Backwoods.Y],['神龛',p.Shrine.X,p.Shrine.Y+1]];
- if(c.Width>80)targets.push(['横向扩展区',50+Math.floor((c.Width-80)/2),25]);if(c.Height>65)targets.push(['纵向扩展区',45,35+Math.floor((c.Height-65)/2)]);
- return targets.filter(([n,x,y])=>seen[y*map.width+x]!==1).map(([n])=>`${n}与农舍之间没有可通行路径。`);
+ const targets=[['target.Cave',p.Cave.X,p.Cave.Y+1],['target.Greenhouse',p.Greenhouse.X+3,p.Greenhouse.Y+6],['target.Bus',p.Bus.X,p.Bus.Y],['target.Forest',p.Forest.X,p.Forest.Y],['target.Backwoods',p.Backwoods.X,p.Backwoods.Y],['target.Shrine',p.Shrine.X,p.Shrine.Y+1]];
+ if(c.Width>80)targets.push(['target.horizontal',50+Math.floor((c.Width-80)/2),25]);if(c.Height>65)targets.push(['target.vertical',45,35+Math.floor((c.Height-65)/2)]);
+ return targets.filter(([n,x,y])=>seen[y*map.width+x]!==1).map(([n])=>msg('connectivity.unreachable',{name:msg(n)}));
 }
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 const xmlProps=p=>Object.keys(p||{}).length?`<properties>${Object.entries(p).map(([k,v])=>`<property name="${esc(k)}" type="string" value="${esc(v)}"/>`).join('')}</properties>`:'';
 export function toTmx(map){
  let gid=1,objectId=1;const starts={},animations={};for(const s of map.sheets){starts[s.id]=gid;gid+=s.width*s.height;}
- for(const l of map.layers)for(const row of l.tiles)for(const t of row)if(t?.frames){const key=t.sheet+':'+t.index;const frames=JSON.stringify(t.frames);if(animations[key]&&animations[key].frames!==frames)throw Error('同一图块包含不同动画，无法无损导出。');animations[key]={frames,interval:t.interval};}
- const sheets=map.sheets.map(s=>{const ids=new Set(Object.keys(s.tileProperties));for(const k of Object.keys(animations))if(k.startsWith(s.id+':'))ids.add(k.slice(s.id.length+1));return `<tileset firstgid="${starts[s.id]}" name="${esc(s.id)}" tilewidth="16" tileheight="16" tilecount="${s.width*s.height}" columns="${s.width}">${xmlProps(Object.fromEntries(Object.entries(s.properties||{}).filter(([k])=>!k.startsWith('@TileIndex@'))))}<image source="${esc(s.image)}" width="${s.width*16}" height="${s.height*16}"/>${[...ids].map(id=>{const anim=animations[s.id+':'+id];return `<tile id="${id}">${xmlProps(s.tileProperties[id]||{})}${anim?`<animation>${JSON.parse(anim.frames).map(f=>{if(f.sheet!==s.id)throw Error('跨图集动画无法导出。');return `<frame tileid="${f.index}" duration="${anim.interval}"/>`;}).join('')}</animation>`:''}</tile>`;}).join('')}</tileset>`;}).join('\n');
+ for(const l of map.layers)for(const row of l.tiles)for(const t of row)if(t?.frames){const key=t.sheet+':'+t.index;const frames=JSON.stringify(t.frames);if(animations[key]&&animations[key].frames!==frames)throw Error(msg('tmx.animationConflict'));animations[key]={frames,interval:t.interval};}
+ const sheets=map.sheets.map(s=>{const ids=new Set(Object.keys(s.tileProperties));for(const k of Object.keys(animations))if(k.startsWith(s.id+':'))ids.add(k.slice(s.id.length+1));return `<tileset firstgid="${starts[s.id]}" name="${esc(s.id)}" tilewidth="16" tileheight="16" tilecount="${s.width*s.height}" columns="${s.width}">${xmlProps(Object.fromEntries(Object.entries(s.properties||{}).filter(([k])=>!k.startsWith('@TileIndex@'))))}<image source="${esc(s.image)}" width="${s.width*16}" height="${s.height*16}"/>${[...ids].map(id=>{const anim=animations[s.id+':'+id];return `<tile id="${id}">${xmlProps(s.tileProperties[id]||{})}${anim?`<animation>${JSON.parse(anim.frames).map(f=>{if(f.sheet!==s.id)throw Error(msg('tmx.crossSheetAnimation'));return `<frame tileid="${f.index}" duration="${anim.interval}"/>`;}).join('')}</animation>`:''}</tile>`;}).join('')}</tileset>`;}).join('\n');
  let id=1;const layers=map.layers.map(l=>`<layer id="${id++}" name="${esc(l.id)}" width="${map.width}" height="${map.height}">${xmlProps(l.properties)}<data encoding="csv">\n${l.tiles.map(row=>row.map(t=>t?starts[t.sheet]+t.index:0).join(',')).join(',\n')}\n</data></layer>`).join('\n');
  const objects=map.layers.map(l=>{const rows=[];for(let y=0;y<map.height;y++)for(let x=0;x<map.width;x++){const t=l.tiles[y][x];if(t&&Object.keys(t.properties||{}).length)rows.push(`<object id="${objectId++}" name="TileData" x="${x*16}" y="${y*16}" width="16" height="16">${xmlProps(t.properties)}</object>`);}return rows.length?`<objectgroup id="${id++}" name="${esc(l.id)}">${rows.join('')}</objectgroup>`:'';}).join('\n');
  return `<?xml version="1.0" encoding="utf-8"?>\n<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="${map.width}" height="${map.height}" tilewidth="16" tileheight="16" infinite="0" nextlayerid="${id}" nextobjectid="${objectId}">${xmlProps(map.properties)}\n${sheets}\n${layers}\n${objects}\n</map>`;

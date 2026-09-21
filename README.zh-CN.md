@@ -20,7 +20,10 @@
 - 支持农舍、温室、洞穴、爷爷神龛、出货箱、宠物水碗及三个出口移动。
 - 移动出口时重建原开口和新开口，保留地图属性、动画及返回坐标。
 - 配偶活动区固定；导出前检查地形、重叠和通行。
-- 页面仅导出 TMX，不需要账号或服务器。刷新页面会丢失未保存的布局。
+- 界面支持中文和英文：按浏览器语言自动选择，也可在页面右上角切换。
+- 布局自动保存在浏览器中，刷新后恢复；可导出布局 JSON，也可导入 JSON 或本编辑器导出的 Farm.tmx（点击「导入」或直接拖到地图上）。
+- 支持撤销、重做（Ctrl/⌘ Z、Ctrl/⌘ ⇧ Z），地图获得焦点时可用方向键微调选中设施（按住 Shift 为 10 格）。
+- 页面仅导出 TMX 和布局 JSON，不需要账号或服务器。
 
 ## 安装默认地图
 
@@ -58,7 +61,7 @@ npm start
 
 打开 `http://127.0.0.1:8765/`。仓库已包含预览资源，普通用户无需提取游戏文件。
 
-`npm test` 运行测试；`npm run build` 生成默认地图包、单文件 HTML 和离线编辑器 ZIP。`site/` 用于 GitHub Pages，目前从 `gh-pages` 分支发布；更新方式及可选 Actions 配置见 [部署说明](docs/DEPLOYMENT.md)。
+`npm test` 运行测试；`npm run build` 生成默认地图包、单文件 HTML 和离线编辑器 ZIP。推送到 `main` 或提交 Pull Request 时，GitHub Actions 会自动运行测试。`site/` 用于 GitHub Pages，目前从 `gh-pages` 分支发布；更新方式及可选 Actions 配置见 [部署说明](docs/DEPLOYMENT.md)。
 
 游戏更新后，维护者可通过 .NET SDK 10、SMAPI 与 `npm run prepare-assets` 从本地游戏重新提取资源。详情见英文 README。
 
