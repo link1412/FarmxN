@@ -6,7 +6,7 @@ const localized=f=>Object.defineProperties({...f,movable:true},{name:{enumerable
 export const FEATURES=[
  {id:'Greenhouse',x:25,y:10,w:9,h:8,icon:'▧',building:true},
  {id:'Farmhouse',x:59,y:12,w:11,h:7,icon:'⌂',building:true},
- {id:'Cave',x:34,y:5,w:7,h:9,ox:-3,oy:-4,icon:'◠',stamp:true},
+ {id:'Cave',x:34,y:5,w:7,h:9,ox:-3,oy:-4,icon:'◠',stamp:true,cliff:'north'},
  {id:'Shrine',x:8,y:7,w:5,h:7,ox:-2,oy:-4,icon:'♧',stamp:true},
  {id:'Shipping Bin',x:71,y:14,w:2,h:2,icon:'▤',building:true},
  {id:'Pet Bowl',x:53,y:7,w:2,h:3,icon:'◒',building:true},
@@ -27,6 +27,7 @@ export function validate(c){
  if(Number.isInteger(c.Width)&&Number.isInteger(c.Height)&&c.Width*c.Height>LIMITS.area)errors.push(t('validate.area',{area:LIMITS.area.toLocaleString()}));
  for(const f of FEATURES){const p=c.Positions[f.id];if(!p||!Number.isInteger(p.X)||!Number.isInteger(p.Y)){errors.push(t('validate.integer',{name:f.name}));continue;}
  if(f.edge==='east'&&p.X!==c.Width-1||f.edge==='south'&&p.Y!==c.Height-1||f.edge==='north'&&p.Y!==0)errors.push(t('validate.edge',{name:f.name}));
+ if(f.cliff&&p.Y!==f.y)errors.push(t('validate.cliff',{name:f.name}));
  for(const r of parts(f,c))if(r.x<0||r.y<0||r.x+r.w>c.Width||r.y+r.h>c.Height)errors.push(t('validate.bounds',{name:f.name}));
  if(parts(f,c).some(r=>overlaps(r,spouseArea(c))))errors.push(t('validate.spouseArea',{name:f.name}));
  for(const o of FEATURES){if(o.id===f.id||!c.Positions[o.id])continue;if(parts(f,c).some(a=>parts(o,c).some(b=>overlaps(a,b))))errors.push(t('validate.overlap',{a:f.name,b:o.name}));}}

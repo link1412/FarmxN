@@ -68,7 +68,7 @@ Alternatively, copy the loader in `templates/[CP] FarmxN` into `Mods` and add yo
 - **Standard farm only; new saves intended.** A map replacement does not migrate buildings, crops or objects in an existing save.
 - Avoid another mod which also replaces `Maps/Farm`.
 - The area cap is an editor budget, not a guarantee that the game loads or runs a map of that size smoothly. A 4096 × 4096 TMX is roughly 240 MB.
-- Caves and shrines can join straight sections of the north wall or stand on clear land. Exits stay on their corresponding map edge.
+- The cave moves only along straight sections of the north cliff. The shrine can sit on the north bank or stand on clear land. Exits stay on their corresponding map edge.
 - Third-party events may assume vanilla coordinates; custom positions are not guaranteed compatible.
 
 ## Develop locally

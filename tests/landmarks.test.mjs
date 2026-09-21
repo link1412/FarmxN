@@ -34,32 +34,37 @@ test('the fixed spouse area follows map expansion, never the moved farmhouse', (
   assert.deepEqual(larger.Positions.Farmhouse, c.Positions.Farmhouse);
   assert.equal(map.properties.SpouseAreaLocation, '189 6');
   for (const id of ['Farmhouse', 'Cave', 'Greenhouse', 'Shipping Bin', 'Pet Bowl']) {
-    const blocked = defaults(); blocked.Positions[id] = { X: 149, Y: 6 };
+    const blocked = defaults(); blocked.Positions[id] = { X: 149, Y: id === 'Cave' ? 5 : 6 };
     assert.ok(validate(blocked).some(e => e.includes('配偶活动区')), id);
     assert.throws(() => makeMap(base, blocked), /配偶活动区/);
   }
 });
 
-test('a detached cave has complete stone ends and no copied tree or cliff rectangle', () => {
-  const c = defaults(), before = makeMap(base, c);
-  c.Positions.Cave = { X: 85, Y: 55 };
-  const map = makeMap(base, c);
-  for (let y = 0; y < 4; y++) {
-    assert.equal(index(map, 'Buildings', 83, 54 + y), [466, 491, 516, 541][y]);
-    assert.equal(index(map, 'Buildings', 87, 54 + y), [469, 494, 519, 544][y]);
+test('the cave only moves along straight stretches of the north cliff', () => {
+  for (const [X, Y] of [[85, 55], [34, 6], [34, 4], [60, 20]]) {
+    const c = defaults(); c.Positions.Cave = { X, Y };
+    assert.ok(validate(c).some(e => e.includes('北侧山壁')), `${X},${Y}`);
+    assert.throws(() => makeMap(base, c));
   }
-  sameArea(map, before, { x: 82, y: 51, w: 7, h: 3 });
-  sameArea(map, before, { x: 82, y: 54, w: 1, h: 6 });
-  sameArea(map, before, { x: 88, y: 54, w: 1, h: 6 });
-  // Old north cliff is closed across its full height, including trees above
-  // the old selection rectangle; no root or cave foreground tile survives.
+  // The curved cliff at the east end passes validation but has no straight face to cut.
+  for (const X of [124, 125, 126]) {
+    const c = defaults(); c.Positions.Cave = { X, Y: 5 };
+    assert.deepEqual(validate(c), []);
+    assert.throws(() => makeMap(base, c), /北侧山壁/, `${X}`);
+  }
+  const c = defaults(), before = makeMap(base, c);
+  c.Positions.Cave = { X: 85, Y: 5 };
+  const map = makeMap(base, c);
+  // Old entrance closed across its full height; the new one sits in the extended wall with nothing else touched.
   for (let y = 0; y < 4; y++) for (let x = 31; x < 38; x++) {
     assert.equal(index(map, 'Buildings', x, y), 16);
     for (const id of ['Front', 'AlwaysFront', 'AlwaysFront2']) assert.equal(index(map, id, x, y), null);
   }
   for (let y = 4; y <= 7; y++) for (let x = 31; x < 38; x++) assert.equal(isPassable(map, x, y), false);
-  assert.equal(map.properties.FarmCaveEntry, '85 56');
-  assert.match(map.properties.Warp, /85 55 FarmCave 8 11/);
+  assert.equal(index(map, 'Buildings', 85, 4), 1634);
+  sameArea(map, before, { x: 0, y: 10, w: 160, h: 120 });
+  assert.equal(map.properties.FarmCaveEntry, '85 6');
+  assert.match(map.properties.Warp, /85 5 FarmCave 8 11/);
   assert.deepEqual(connectivity(map, c), []);
 });
 
@@ -76,7 +81,7 @@ test('caves can move one tile along the north wall without erasing their new ent
     assert.equal(arches, 1);
   }
   const c = defaults(); c.Positions.Cave = { X: 126, Y: 5 };
-  assert.throws(() => makeMap(base, c), /不可通行/); // curved cliff cannot be sliced into a flat opening
+  assert.throws(() => makeMap(base, c), /北侧山壁/); // curved cliff cannot be sliced into a flat opening
 });
 
 test('small exit moves remove old openings and align fence caps with adjacent posts', () => {
@@ -90,7 +95,7 @@ test('small exit moves remove old openings and align fence caps with adjacent po
     assert.deepEqual(connectivity(map, c), []);
   }
   for (const [id, xs] of [['Backwoods', [39, 41, 42, 90]], ['Forest', [39, 40, 42, 43, 100]]]) for (const x of xs) {
-    const c = defaults(); c.Positions.Cave = { X: 85, Y: 55 }; c.Positions[id] = { X: x, Y: id === 'Forest' ? 129 : 0 };
+    const c = defaults(); c.Positions.Cave = { X: 70, Y: 5 }; c.Positions[id] = { X: x, Y: id === 'Forest' ? 129 : 0 };
     const map = makeMap(base, c), y = c.Positions[id].Y, open = id === 'Forest' ? [x - 1, x] : [x, x + 1];
     for (const xx of open) assert.equal(isPassable(map, xx, y), true);
     for (const xx of [40, 41]) if (!open.includes(xx)) assert.equal(isPassable(map, xx, y), false);
@@ -100,7 +105,7 @@ test('small exit moves remove old openings and align fence caps with adjacent po
 
 test('restoring moved landmarks reproduces the original map without accumulated remnants', () => {
   const c = defaults(), before = makeMap(base, c), moved = structuredClone(c);
-  Object.assign(moved.Positions, { Cave: { X: 85, Y: 55 }, Farmhouse: { X: 100, Y: 70 }, Bus: { X: 159, Y: 19 }, Forest: { X: 43, Y: 129 }, Backwoods: { X: 43, Y: 0 } });
+  Object.assign(moved.Positions, { Cave: { X: 70, Y: 5 }, Farmhouse: { X: 100, Y: 70 }, Bus: { X: 159, Y: 19 }, Forest: { X: 43, Y: 129 }, Backwoods: { X: 43, Y: 0 } });
   assert.deepEqual(connectivity(makeMap(base, moved), moved), []);
   assert.deepEqual(makeMap(base, c), before);
 });

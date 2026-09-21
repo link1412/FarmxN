@@ -37,7 +37,7 @@ test('landmark names, validation and map errors follow the active locale',()=>{
   assert.equal(FEATURES.find(f=>f.id==='Shrine').name,'Grandpa’s shrine');
   assert.match(validate(defaults(4096,4097))[0],/Total map area/);
   const blocked=defaults();blocked.Positions.Cave={X:126,Y:5};
-  assert.throws(()=>makeMap(base,blocked),/Farm cave covers water, trees or impassable terrain at \(\d+, \d+\)\./);
+  assert.throws(()=>makeMap(base,blocked),/no straight stretch of north cliff here for the Farm cave/);
   const pond=defaults();pond.Positions.Bus.Y=30;
   assert.throws(()=>makeMap(base,pond),/Bus stop exit cannot cover water/);
   setLocale('zh-CN');
@@ -55,7 +55,7 @@ test('the worker reports errors in the locale sent with each request',async()=>{
   await assert.rejects(call('generate',{config:defaults(),locale:'en'}),/not loaded yet/);
   await call('init',{base});
   const bad=defaults();bad.Positions.Cave={X:0,Y:0};
-  await assert.rejects(call('generate',{config:bad,locale:'en'}),/Farm cave extends beyond the map/);
-  await assert.rejects(call('generate',{config:bad,locale:'zh-CN'}),/农场洞穴的设施组超出地图边界/);
+  await assert.rejects(call('generate',{config:bad,locale:'en'}),/Farm cave can only move along the north cliff/);
+  await assert.rejects(call('generate',{config:bad,locale:'zh-CN'}),/农场洞穴只能沿北侧山壁移动/);
  }finally{await worker.terminate();}
 });

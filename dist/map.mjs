@@ -47,7 +47,7 @@ export function makeMap(base,c){
  // Validate destination terrain after source patches are removed, before placing them.
  for(const f of FEATURES){const p=c.Positions[f.id],q=initial.Positions[f.id];if(p.X===q.X&&p.Y===q.Y||f.edge)continue;
   if(f.id==='Shrine'&&shrineOnNorthBank(generated,rect(f,c)))continue;
-  if(f.id==='Cave'&&p.Y===5&&isNorthCliff(generated,p.X))continue;
+  if(f.id==='Cave'){if(!isNorthCliff(generated,p.X))throw Error(msg('map.caveCliff',{name:f.name}));continue;}
   for(const r of parts(f,c))for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++){
    if(!isPassable(generated,x,y))throw Error(msg('map.blockedTerrain',{name:f.name,x,y}));
   }
