@@ -17,7 +17,7 @@
 
 ## Features
 
-- **Flexible dimensions:** minimum 80 × 65. Performance profiles allow 262,144 (light), 1,048,576 (balanced) or 4,194,304 (high) tiles. Auto mode recommends a profile from the memory information exposed by the browser, with a conservative light fallback. You can override it manually. The default download is 2048 × 2048, shown as **Farm x 806.6**. The editor opens this size on the high profile; other profiles start at 160 × 130 (**Farm x 4**).
+- **Flexible dimensions:** minimum 80 × 65, maximum 16,777,216 tiles (4096 × 4096, **Farm x 3226**), each side bounded at 16,384 tiles. The default download is 2048 × 2048, shown as **Farm x 806.6**. The editor opens this size, or 160 × 130 (**Farm x 4**) when the browser reports less than 8 GB of memory. Maps above 2048 × 2048 need several GB of free memory in the browser and in the game, and take longer to generate, export and load.
 - **Movable landmarks:** farmhouse, greenhouse, cave, Grandpa's shrine, shipping bin, pet bowl and three exits.
 - **Boundary rebuilding:** moving an exit closes its old opening and joins its new one to the surrounding terrain.
 - **Preserved metadata:** map properties, tile properties, animations and entry/return coordinates are carried into TMX.
@@ -29,7 +29,7 @@
 - **Undo, redo and keyboard nudging:** Ctrl/⌘ Z and Ctrl/⌘ ⇧ Z step through up to 60 changes; the arrow keys move the selected landmark one tile (ten with Shift) while the map has focus.
 - **Background generation:** map generation and TMX export run in a background worker. The canvas uses a bounded overview and caches visible chunks (up to 32 MiB), with one redraw per animation frame. Dragging a landmark previews its position; release it to rebuild and validate the map.
 
-The **Farm x N** multiplier is total map area divided by the original 80 × 65 area, not plantable space. The high profile supports e.g. 2048 × 2048 (Farm x 806.6); each side is also bounded at 16,384 tiles.
+The **Farm x N** multiplier is total map area divided by the original 80 × 65 area, not plantable space.
 
 The interface is available in English and Chinese. The spouse activity area stays in its original location.
 
@@ -67,7 +67,7 @@ Alternatively, copy the loader in `templates/[CP] FarmxN` into `Mods` and add yo
 
 - **Standard farm only; new saves intended.** A map replacement does not migrate buildings, crops or objects in an existing save.
 - Avoid another mod which also replaces `Maps/Farm`.
-- The area cap is an editor resource budget, not a guarantee of in-game frame rate.
+- The area cap is an editor budget, not a guarantee that the game loads or runs a map of that size smoothly. A 4096 × 4096 TMX is roughly 240 MB.
 - Caves and shrines can join straight sections of the north wall or stand on clear land. Exits stay on their corresponding map edge.
 - Third-party events may assume vanilla coordinates; custom positions are not guaranteed compatible.
 

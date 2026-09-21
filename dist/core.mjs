@@ -1,5 +1,5 @@
 import {t} from './i18n.mjs';
-export const BASE={width:80,height:65}, LIMITS={width:16384,height:16384,area:4194304}, CUT={x:50,y:35};
+export const BASE={width:80,height:65}, LIMITS={width:16384,height:16384,area:4096*4096}, CUT={x:50,y:35};
 // Names and notes are resolved through the message catalog on every access, so
 // switching the page language re-labels landmarks and every error message.
 const localized=f=>Object.defineProperties({...f,movable:true},{name:{enumerable:true,get(){return t(`feature.${f.id}.name`);}},note:{enumerable:true,get(){return t(`feature.${f.id}.note`);}}});
@@ -34,11 +34,5 @@ export function validate(c){
 }
 export function normalized(c){return {SchemaVersion:2,Width:c.Width,Height:c.Height,Positions:Object.fromEntries(FEATURES.map(f=>[f.id,{...c.Positions[f.id]}]))};}
 
-export const PERFORMANCE_PROFILES={light:{area:262144},balanced:{area:1048576},high:{area:4194304}};
-export function profileLabel(profile){return t(`profile.${PERFORMANCE_PROFILES[profile]?profile:'light'}`);}
-// The preferred profile when the map fits, otherwise the smallest one that holds it.
-export function fittingProfile(area,preferred='light'){if(profileLimits(preferred).area>=area)return PERFORMANCE_PROFILES[preferred]?preferred:'light';return Object.keys(PERFORMANCE_PROFILES).find(id=>PERFORMANCE_PROFILES[id].area>=area)||'high';}
-export function recommendedProfile(memoryGB){return Number.isFinite(memoryGB)&&memoryGB>=8?'high':Number.isFinite(memoryGB)&&memoryGB>=4?'balanced':'light';}
-export function profileLimits(profile){const p=PERFORMANCE_PROFILES[profile]||PERFORMANCE_PROFILES.light;return {area:p.area,width:Math.min(LIMITS.width,Math.floor(p.area/BASE.height)),height:Math.min(LIMITS.height,Math.floor(p.area/BASE.width))};}
 export function areaMultiplier(width,height){return width*height/(BASE.width*BASE.height);}
 export function formatMultiplier(width,height){return Number(areaMultiplier(width,height).toFixed(2)).toLocaleString('en-US',{maximumFractionDigits:2});}

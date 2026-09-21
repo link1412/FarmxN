@@ -10,23 +10,20 @@ export function isPassable(map,x,y){if(x<0||y<0||x>=map.width||y>=map.height)ret
 export function makeMap(base,c){
  const errors=validate(c);if(errors.length)throw Error(errors[0]);
  const dx=c.Width-80,dy=c.Height-65;
- const inHorizontalInsert=x=>x>=CUT.x&&x<CUT.x+dx;
- const inVerticalInsert=y=>y>=CUT.y&&y<CUT.y+dy;
- const source=(x,y)=>({x:x<CUT.x?x:x<CUT.x+dx?CUT.x:x-dx,y:y<CUT.y?y:y<CUT.y+dy?CUT.y:y-dy});
- const sample=(x,y)=>{
-  const horizontal=inHorizontalInsert(x),vertical=inVerticalInsert(y);
-  if(!horizontal&&!vertical)return source(x,y);
-  return null;
- };
  const groundTiles=base.layers.find(a=>a.id==='Back').tiles;
  // Repeated terrain is immutable; share its templates instead of cloning millions of identical tiles.
  const terrainCache=new Map(),terrain=t=>{if(!terrainCache.has(t))terrainCache.set(t,clone(t));return terrainCache.get(t);};
- const generated={...base,width:c.Width,height:c.Height,properties:{...base.properties},layers:base.layers.map(l=>({...l,tiles:Array.from({length:c.Height},(_,y)=>Array.from({length:c.Width},(_,x)=>{
-  const p=sample(x,y);
-  if(p)return clone(l.tiles[p.y][p.x]);
-  if(l.id==='Back')return terrain(groundTiles[25+(x+y)%3][40+(x*3+y)%3]);
-  return null;
- }))}))};
+ // Rows and columns outside the two inserts copy the base map; the inserts are meadow on Back and
+ // empty on every other layer. Filling whole rows keeps a 4096 × 4096 map to a few seconds.
+ const generated={...base,width:c.Width,height:c.Height,properties:{...base.properties},layers:base.layers.map(l=>{
+  const isBack=l.id==='Back';
+  return {...l,tiles:Array.from({length:c.Height},(_,y)=>{
+   const row=new Array(c.Width).fill(null),vertical=y>=CUT.y&&y<CUT.y+dy,sy=y<CUT.y?y:y-dy;
+   if(!vertical){for(let x=0;x<CUT.x;x++)row[x]=clone(l.tiles[sy][x]);for(let x=CUT.x+dx;x<c.Width;x++)row[x]=clone(l.tiles[sy][x-dx]);}
+   if(isBack)for(let x=vertical?0:CUT.x,end=vertical?c.Width:CUT.x+dx;x<end;x++)row[x]=terrain(groundTiles[25+(x+y)%3][40+(x*3+y)%3]);
+   return row;
+  })};
+ })};
  expandPerimeter(base,generated);
  const spouse=spouseArea(c),fixedPatio=generated.layers.map(l=>Array.from({length:spouse.h},(_,y)=>l.tiles[spouse.y+y].slice(spouse.x,spouse.x+spouse.w).map(clone)));
  const initial=defaults(c.Width,c.Height),stamps=[],exits=[];let cave=null,shrine=null;
@@ -95,11 +92,21 @@ export function connectivity(map,c){
 }
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 const xmlProps=p=>Object.keys(p||{}).length?`<properties>${Object.entries(p).map(([k,v])=>`<property name="${esc(k)}" type="string" value="${esc(v)}"/>`).join('')}</properties>`:'';
-export function toTmx(map){
+// The TMX is produced as a sequence of strings (one per CSV row) so a 4096 × 4096 map never has
+// to exist as one 240 MB string. toTmx joins them for tools and tests.
+export function* tmxChunks(map){
  let gid=1,objectId=1;const starts={},animations={};for(const s of map.sheets){starts[s.id]=gid;gid+=s.width*s.height;}
  for(const l of map.layers)for(const row of l.tiles)for(const t of row)if(t?.frames){const key=t.sheet+':'+t.index;const frames=JSON.stringify(t.frames);if(animations[key]&&animations[key].frames!==frames)throw Error(msg('tmx.animationConflict'));animations[key]={frames,interval:t.interval};}
  const sheets=map.sheets.map(s=>{const ids=new Set(Object.keys(s.tileProperties));for(const k of Object.keys(animations))if(k.startsWith(s.id+':'))ids.add(k.slice(s.id.length+1));return `<tileset firstgid="${starts[s.id]}" name="${esc(s.id)}" tilewidth="16" tileheight="16" tilecount="${s.width*s.height}" columns="${s.width}">${xmlProps(Object.fromEntries(Object.entries(s.properties||{}).filter(([k])=>!k.startsWith('@TileIndex@'))))}<image source="${esc(s.image)}" width="${s.width*16}" height="${s.height*16}"/>${[...ids].map(id=>{const anim=animations[s.id+':'+id];return `<tile id="${id}">${xmlProps(s.tileProperties[id]||{})}${anim?`<animation>${JSON.parse(anim.frames).map(f=>{if(f.sheet!==s.id)throw Error(msg('tmx.crossSheetAnimation'));return `<frame tileid="${f.index}" duration="${anim.interval}"/>`;}).join('')}</animation>`:''}</tile>`;}).join('')}</tileset>`;}).join('\n');
- let id=1;const layers=map.layers.map(l=>`<layer id="${id++}" name="${esc(l.id)}" width="${map.width}" height="${map.height}">${xmlProps(l.properties)}<data encoding="csv">\n${l.tiles.map(row=>row.map(t=>t?starts[t.sheet]+t.index:0).join(',')).join(',\n')}\n</data></layer>`).join('\n');
+ let id=1;const layerIds=map.layers.map(()=>id++);
  const objects=map.layers.map(l=>{const rows=[];for(let y=0;y<map.height;y++)for(let x=0;x<map.width;x++){const t=l.tiles[y][x];if(t&&Object.keys(t.properties||{}).length)rows.push(`<object id="${objectId++}" name="TileData" x="${x*16}" y="${y*16}" width="16" height="16">${xmlProps(t.properties)}</object>`);}return rows.length?`<objectgroup id="${id++}" name="${esc(l.id)}">${rows.join('')}</objectgroup>`:'';}).join('\n');
- return `<?xml version="1.0" encoding="utf-8"?>\n<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="${map.width}" height="${map.height}" tilewidth="16" tileheight="16" infinite="0" nextlayerid="${id}" nextobjectid="${objectId}">${xmlProps(map.properties)}\n${sheets}\n${layers}\n${objects}\n</map>`;
+ yield `<?xml version="1.0" encoding="utf-8"?>\n<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="${map.width}" height="${map.height}" tilewidth="16" tileheight="16" infinite="0" nextlayerid="${id}" nextobjectid="${objectId}">${xmlProps(map.properties)}\n${sheets}\n`;
+ for(let i=0;i<map.layers.length;i++){
+  const l=map.layers[i],rows=l.tiles,last=rows.length-1;
+  yield `<layer id="${layerIds[i]}" name="${esc(l.id)}" width="${map.width}" height="${map.height}">${xmlProps(l.properties)}<data encoding="csv">\n`;
+  for(let y=0;y<rows.length;y++){const row=rows[y],out=new Array(row.length);for(let x=0;x<row.length;x++){const t=row[x];out[x]=t?starts[t.sheet]+t.index:0;}yield out.join(',')+(y<last?',\n':'\n');}
+  yield '</data></layer>\n';
+ }
+ yield `${objects}\n</map>`;
 }
+export function toTmx(map){return [...tmxChunks(map)].join('');}

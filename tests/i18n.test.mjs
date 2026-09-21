@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {Worker} from 'node:worker_threads';
 import {LOCALES,DEFAULT_LOCALE,messageKeys,setLocale,getLocale,detectLocale,t} from '../dist/i18n.mjs';
-import {FEATURES,defaults,validate,fittingProfile,profileLabel,normalized} from '../dist/core.mjs';
+import {FEATURES,defaults,validate} from '../dist/core.mjs';
 import {makeMap,toTmx} from '../dist/map.mjs';
 const base=JSON.parse(fs.readFileSync(new URL('../dist/assets/farm.json',import.meta.url)));
 const placeholders=text=>[...text.matchAll(/\{(\w+)\}/g)].map(m=>m[1]).sort();
 
 test('every locale has the same keys, no blanks and matching placeholders',()=>{
  const ids=LOCALES.map(l=>l.id),keys=messageKeys(ids[0]).sort();
- assert.ok(keys.length>100);
+ assert.ok(keys.length>80);
  for(const id of ids)assert.deepEqual(messageKeys(id).sort(),keys,id);
  try{
   for(const id of ids){setLocale(id);for(const key of keys){assert.ok(t(key).trim(),`${id} ${key}`);assert.notEqual(t(key),key,`${id} ${key}`);}}
@@ -35,25 +35,15 @@ test('landmark names, validation and map errors follow the active locale',()=>{
  try{
   setLocale('en');
   assert.equal(FEATURES.find(f=>f.id==='Shrine').name,'Grandpa’s shrine');
-  assert.match(validate(defaults(2048,2049))[0],/Total map area/);
+  assert.match(validate(defaults(4096,4097))[0],/Total map area/);
   const blocked=defaults();blocked.Positions.Cave={X:126,Y:5};
   assert.throws(()=>makeMap(base,blocked),/Farm cave covers water, trees or impassable terrain at \(\d+, \d+\)\./);
   const pond=defaults();pond.Positions.Bus.Y=30;
   assert.throws(()=>makeMap(base,pond),/Bus stop exit cannot cover water/);
-  assert.equal(profileLabel('high'),'High');
   setLocale('zh-CN');
   assert.equal(FEATURES.find(f=>f.id==='Shrine').name,'爷爷的神龛');
   assert.throws(()=>makeMap(base,pond),/巴士站出口不能覆盖水面/);
-  assert.equal(profileLabel('high'),'高性能');
  }finally{setLocale(DEFAULT_LOCALE);}
-});
-
-test('fitting profile keeps the preferred profile when the map fits, otherwise the smallest that holds it',()=>{
- assert.equal(fittingProfile(160*130,'light'),'light');
- assert.equal(fittingProfile(160*130,'high'),'high');
- assert.equal(fittingProfile(1000*1000,'light'),'balanced');
- assert.equal(fittingProfile(2048*2048,'balanced'),'high');
- assert.equal(fittingProfile(160*130,'nonsense'),'light');
 });
 
 test('the worker reports errors in the locale sent with each request',async()=>{

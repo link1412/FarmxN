@@ -11,7 +11,8 @@ export function packPreview(map) {
   objects.set(tile,id);return id;
  };
  const layers=map.layers.filter(l=>l.id!=='Paths').map(l=>{
-  const cells=new Uint32Array(map.width*map.height);let i=0;
+  // The palette never approaches 65,536 entries (it is bounded by the tiles in four sheets).
+  const cells=new Uint16Array(map.width*map.height);let i=0;
   for(const row of l.tiles)for(const tile of row)cells[i++]=idFor(tile);
   return {id:l.id,cells};
  });

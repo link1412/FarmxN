@@ -1,4 +1,4 @@
-import {BASE,FEATURES,defaults,validate,rect,normalized,resized,transform,spouseArea,PERFORMANCE_PROFILES,recommendedProfile,profileLimits,profileLabel,fittingProfile,formatMultiplier} from './core.mjs';
+import {BASE,LIMITS,FEATURES,defaults,validate,rect,normalized,resized,transform,spouseArea,formatMultiplier} from './core.mjs';
 import {createMapWorker,loadBase,loadImage,whenVisible} from './resources.mjs';
 import {MapRenderer,visibleTiles} from './renderer.mjs';
 import {download} from './export.mjs';
@@ -8,11 +8,11 @@ const $=id=>document.getElementById(id),canvas=$('map'),ctx=canvas.getContext('2
 // in private windows and some file:// setups, so every access is guarded and nothing depends on it.
 const STORAGE={locale:'farmxn.locale',layout:'farmxn.layout'};
 const store={get(key){try{return localStorage.getItem(key);}catch{return null;}},set(key,value){try{localStorage.setItem(key,value);}catch{}}};
-let profile='auto',busy=false,ready=false;
-const autoProfile=recommendedProfile(navigator.deviceMemory);
-const activeProfile=()=>profile==='auto'?autoProfile:profile;
-const currentLimits=()=>profileLimits(activeProfile());
-const initialConfig=()=>currentLimits().area>=2048*2048?defaults(2048,2048):defaults();
+let busy=false,ready=false;
+// Open the 2048 × 2048 default farm unless the browser reports a small memory budget.
+const lowMemory=Number.isFinite(navigator.deviceMemory)&&navigator.deviceMemory<8;
+const initialConfig=()=>lowMemory?defaults():defaults(2048,2048);
+const HEAVY_AREA=2048*2048;
 let config=initialConfig(),selected=FEATURES[0],history=[],future=[],worker,renderer,images={},zoom=1,offset={x:0,y:0},drag=null,toastTimer,framePending=false;
 setLocale(store.get(STORAGE.locale)||detectLocale(navigator.languages||[navigator.language]));
 function applyLocale(){
@@ -24,13 +24,13 @@ function applyLocale(){
  for(const el of document.querySelectorAll('[data-i18n-aria]'))el.setAttribute('aria-label',t(el.dataset.i18nAria));
  $('language').textContent=t('ui.switchLanguage');$('language').title=t('ui.switchLanguageTitle');$('language').lang=getLocale()==='en'?'zh-CN':'en';
  $('coordinates').textContent=t('status.hint');
- updatePerformance();if(ready)sync();
+ updateLimits();if(ready)sync();
 }
 $('language').onclick=()=>{setLocale(getLocale()==='en'?'zh-CN':'en');store.set(STORAGE.locale,getLocale());applyLocale();};
-function persist(){store.set(STORAGE.layout,JSON.stringify({config:normalized(config),profile}));}
-function savedLayout(){try{const saved=JSON.parse(store.get(STORAGE.layout));if(saved?.config&&!validate(saved.config).length)return {config:normalized(saved.config),profile:saved.profile==='auto'||PERFORMANCE_PROFILES[saved.profile]?saved.profile:'auto'};}catch{}return null;}
+function persist(){store.set(STORAGE.layout,JSON.stringify({config:normalized(config)}));}
+function savedLayout(){try{const saved=JSON.parse(store.get(STORAGE.layout));if(saved?.config&&!validate(saved.config).length)return {config:normalized(saved.config)};}catch{}return null;}
 function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),4500);}
-function check(next){if(next.Width*next.Height>currentLimits().area)throw Error(t('perf.overArea'));const errors=validate(next);if(errors.length)throw Error(errors[0]);}
+function check(next){const errors=validate(next);if(errors.length)throw Error(errors[0]);}
 async function prepare(next){check(next);const display=await worker.call('generate',{config:normalized(next)}),result=new MapRenderer(draw);await result.setMap(display);return result;}
 async function commit(next,message,{remember=true,fitView=false}={}){
  if(!ready){toast(t('toast.notReady'));return false;}
@@ -39,7 +39,7 @@ async function commit(next,message,{remember=true,fitView=false}={}){
  return runBusy(t('busy.generating'),async()=>{const result=await prepare(next);if(remember){history.push(structuredClone(config));if(history.length>60)history.shift();future.length=0;}config=normalized(next);renderer=result;persist();sync();if(fitView)fit();if(message)toast(message);return true;});
 }
 function sync(){
- $('width').value=config.Width;$('height').value=config.Height;$('dimensions').textContent=`${config.Width} × ${config.Height}`;$('area').textContent=(config.Width*config.Height).toLocaleString();$('ratio').textContent=`Farm x ${formatMultiplier(config.Width,config.Height)}`;$('undo').disabled=!history.length;$('redo').disabled=!future.length;
+ $('width').value=config.Width;$('height').value=config.Height;updateSizeNote();$('dimensions').textContent=`${config.Width} × ${config.Height}`;$('area').textContent=(config.Width*config.Height).toLocaleString();$('ratio').textContent=`Farm x ${formatMultiplier(config.Width,config.Height)}`;$('undo').disabled=!history.length;$('redo').disabled=!future.length;
  document.querySelectorAll('[data-size]').forEach(b=>b.classList.toggle('active',b.dataset.size===`${config.Width},${config.Height}`));
  $('feature-list').replaceChildren(...FEATURES.map(f=>{const b=document.createElement('button'),active=f.id===selected.id;b.className='feature'+(active?' active':'');b.setAttribute('aria-pressed',String(active));b.innerHTML=`<span class="feature-icon">${f.icon}</span><span><strong>${f.name}</strong><span class="coord">${config.Positions[f.id].X}, ${config.Positions[f.id].Y} · ${f.w} × ${f.h}</span></span>`;b.onclick=()=>{selected=f;sync();};return b;}));
  const p=config.Positions[selected.id];$('selected-name').textContent=selected.name;$('selected-note').textContent=selected.note;$('pos-x').value=p.X;$('pos-y').value=p.Y;
@@ -83,8 +83,9 @@ window.addEventListener('keydown',e=>{
  if((e.ctrlKey||e.metaKey)&&!typing){const key=e.key.toLowerCase();if(key==='z'||key==='y'){e.preventDefault();(key==='y'||e.shiftKey?$('redo'):$('undo')).click();}}
  if(e.key.startsWith('Arrow')&&document.activeElement===$('map-viewport')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();nudge(e.key,e.shiftKey?10:1);}
 });
-function updatePerformance(){const limits=currentLimits(),active=activeProfile();$('width').max=limits.width;$('height').max=limits.height;$('size-limit').textContent=t('dims.limit',{w:BASE.width,h:BASE.height,area:limits.area.toLocaleString()});$('performance-note').textContent=profile==='auto'?(Number.isFinite(navigator.deviceMemory)?t('perf.autoNote',{profile:profileLabel(active)}):t('perf.autoUnknown')):t('perf.manualNote',{profile:profileLabel(active)});}
-$('performance').onchange=()=>{const next=$('performance').value,limits=profileLimits(next==='auto'?autoProfile:next);if(config.Width*config.Height>limits.area){$('performance').value=profile;toast(t('perf.shrinkFirst'));return;}profile=next;updatePerformance();if(ready)persist();};
+function updateLimits(){$('width').max=LIMITS.width;$('height').max=LIMITS.height;$('size-limit').textContent=t('dims.limit',{w:BASE.width,h:BASE.height,area:LIMITS.area.toLocaleString()});updateSizeNote();}
+function updateSizeNote(){const heavy=Number($('width').value)*Number($('height').value)>HEAVY_AREA;$('size-note').textContent=heavy?t('dims.heavy'):'';$('size-note').hidden=!heavy;}
+$('width').oninput=$('height').oninput=updateSizeNote;
 async function runBusy(message,fn){if(busy)return;busy=true;const overlay=document.createElement('div');overlay.className='busy-overlay';overlay.textContent=message;overlay.setAttribute('role','status');document.body.append(overlay);try{await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));return await fn();}catch(e){toast(e.message);return false;}finally{overlay.remove();busy=false;}}
 applyLocale();
 new ResizeObserver(()=>fit()).observe($('map-viewport'));
@@ -93,8 +94,8 @@ try{
  // Reopen the last layout saved in this browser; fall back to the default if it no longer generates.
  const saved=savedLayout();let restored=false;
  if(saved){
-  try{profile=saved.profile;const area=saved.config.Width*saved.config.Height;if(area>currentLimits().area)profile=fittingProfile(area,activeProfile());$('performance').value=profile;updatePerformance();renderer=await prepare(saved.config);config=saved.config;restored=true;}
-  catch(e){console.warn('Saved layout could not be restored:',e);profile='auto';$('performance').value='auto';updatePerformance();config=initialConfig();}
+  try{renderer=await prepare(saved.config);config=saved.config;restored=true;}
+  catch(e){console.warn('Saved layout could not be restored:',e);config=initialConfig();}
  }
  if(!restored)renderer=await prepare(config);
  ready=true;$('loading').remove();sync();fit();persist();

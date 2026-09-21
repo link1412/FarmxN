@@ -25,7 +25,7 @@ test('worker transfers previews, recovers from invalid moves and exports the cur
  const call=(kind,args={})=>new Promise((resolve,reject)=>{const id=++serial;worker.once('message',data=>data.error?reject(Error(data.error)):resolve(data.result));worker.postMessage({id,kind,...args});});
  try{
   await call('init',{base});const config=defaults(160,130);
-  const preview=await call('generate',{config});assert.equal(preview.width,160);assert.ok(preview.layers[0].cells instanceof Uint32Array);
+  const preview=await call('generate',{config});assert.equal(preview.width,160);assert.ok(preview.layers[0].cells instanceof Uint16Array);
   const bad=structuredClone(config);bad.Positions.Cave={X:0,Y:0};await assert.rejects(call('generate',{config:bad}));
   config.Positions.Shrine={X:20,Y:7};await call('generate',{config});
   const blob=await call('export',{config});assert.equal(await blob.text(),toTmx(makeMap(base,config)));
